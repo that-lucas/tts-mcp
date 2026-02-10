@@ -1,0 +1,3 @@
+google-cloud-texttospeech>=2.27.0
+google-auth-oauthlib>=1.2.1
+fastmcp<3

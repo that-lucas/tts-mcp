@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Local runtime artifacts
+out/
+voices/
+usage_log.csv
+
+# Audio outputs
+*.wav
+*.mp3
+*.ogg
+
+# IDE/editor
+.idea/
+.vscode/

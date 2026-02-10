@@ -1,0 +1,12 @@
+Your M4 MacBook Pro (32 GB RAM) is more than enough for Kokoro local.
+
+Recommended plan: start with Kokoro ONNX (lowest infrastructure impact), then optionally test full PyTorch Kokoro.
+
+1. Choose runtime
+
+- Primary (recommended): kokoro-onnx
+  - Officially claims near-real-time on M1 and lightweight model sizes.
+  - Best for always-on CLI narration with minimal load.
+- Secondary: kokoro (PyTorch)
+  - More "native" pipeline, but heavier runtime.
+  - On Apple Silicon, project docs suggest PYTORCH_ENABLE_MPS_FALLBACK=1.
