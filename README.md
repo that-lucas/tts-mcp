@@ -18,9 +18,9 @@ This project is currently Google-specific. You can switch voices/models within G
 ## Quick start
 
 ```bash
-git clone git@github.com:<your-user>/tts-mcp.git
+git clone git@github.com:that-lucas/tts-mcp.git
 cd tts-mcp
-export REPO_DIR="$(pwd)"
+export ABS_PATH_TO_REPO="$(pwd)"
 
 make setup
 make doctor
@@ -51,7 +51,7 @@ make doctor
 ### 3) Generate user credentials for this project
 
 ```bash
-cd "$REPO_DIR"
+cd "$ABS_PATH_TO_REPO"
 source .venv/bin/activate
 
 python oauth_login.py \
@@ -107,7 +107,7 @@ Current example profiles include `opencode`, `codex`, and `claude_code`.
 - Playback is launched in background mode (non-blocking).
 - Output files are always saved.
 - Default filename pattern:
-  - `YYYY-MM-DD-HH-MM-SS-MMM.<ext>`
+  - `YYYY-MM-DD-HH-MM-SS-MMM.wav` (or `.mp3` / `.ogg`)
 
 Run MCP diagnostics:
 
@@ -126,8 +126,8 @@ make mcp-run MCP_PROFILE=opencode
 Use an absolute repository path in all client configs.
 
 ```bash
-export REPO_DIR="/absolute/path/to/tts-mcp"
-export TTS_CREDS_JSON="$HOME/.config/gcp/tts-oauth-user.json"
+export ABS_PATH_TO_REPO="/absolute/path/to/tts-mcp"
+export ABS_PATH_TO_CREDENTIALS_JSON="/absolute/path/to/tts-oauth-user.json"
 ```
 
 ### OpenCode
@@ -169,11 +169,11 @@ Edit `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.speech]
-command = "/absolute/path/to/tts-mcp/.venv/bin/python"
+command = "<ABS_PATH_TO_REPO>/.venv/bin/python"
 args = [
-  "/absolute/path/to/tts-mcp/mcp_server.py",
+  "<ABS_PATH_TO_REPO>/mcp_server.py",
   "--profile-file",
-  "/absolute/path/to/tts-mcp/tts_profiles.json",
+  "<ABS_PATH_TO_REPO>/tts_profiles.json",
   "--profile",
   "codex"
 ]
@@ -196,10 +196,10 @@ Add server:
 
 ```bash
 claude mcp add --transport stdio --scope user \
-  --env GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcp/tts-oauth-user.json" \
+  --env GOOGLE_APPLICATION_CREDENTIALS="<ABS_PATH_TO_CREDENTIALS_JSON>" \
   speech -- \
-  "$REPO_DIR/.venv/bin/python" "$REPO_DIR/mcp_server.py" \
-  --profile-file "$REPO_DIR/tts_profiles.json" \
+  "<ABS_PATH_TO_REPO>/.venv/bin/python" "<ABS_PATH_TO_REPO>/mcp_server.py" \
+  --profile-file "<ABS_PATH_TO_REPO>/tts_profiles.json" \
   --profile claude_code
 ```
 
