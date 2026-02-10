@@ -1,59 +1,110 @@
-# Client Setup Notes
+# Client Setup
 
-## OpenCode (primary)
+This guide shows how to register this server in different MCP-capable clients.
 
-Add an MCP server entry that starts `mcp_server.py` over stdio.
+Use absolute paths in all client configs.
 
-Suggested OpenCode config snippet:
+## Shared values
+
+- `REPO_DIR`: absolute path to this repository
+- `CREDS_JSON`: absolute path to your Google credential file
+
+Example:
+
+```bash
+REPO_DIR=/absolute/path/to/tts-mcp
+CREDS_JSON=/absolute/path/to/tts-oauth-user.json
+```
+
+## OpenCode
+
+Edit `~/.config/opencode/opencode.jsonc` and add:
 
 ```jsonc
 {
-  "$schema": "https://opencode.ai/config.json",
   "mcp": {
     "speech": {
       "type": "local",
       "command": [
-        "/ABS/PATH/TO/TTS/.venv/bin/python",
-        "/ABS/PATH/TO/TTS/mcp_server.py",
+        "<REPO_DIR>/.venv/bin/python",
+        "<REPO_DIR>/mcp_server.py",
         "--profile-file",
-        "/ABS/PATH/TO/TTS/tts_profiles.json",
+        "<REPO_DIR>/tts_profiles.json",
         "--profile",
         "opencode"
       ],
       "environment": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "/ABS/PATH/TO/tts-oauth-user.json"
+        "GOOGLE_APPLICATION_CREDENTIALS": "<CREDS_JSON>"
       },
-      "enabled": true
+      "enabled": true,
+      "timeout": 120000
     }
   }
 }
 ```
 
-Equivalent command:
+Verify:
 
 ```bash
-~/TTS/.venv/bin/python ~/TTS/mcp_server.py --profile-file ~/TTS/tts_profiles.json --profile opencode
+opencode mcp list
 ```
 
-Required env var:
+## Codex CLI
+
+Edit `~/.codex/config.toml` and add:
+
+```toml
+[mcp_servers.speech]
+command = "/absolute/path/to/tts-mcp/.venv/bin/python"
+args = [
+  "/absolute/path/to/tts-mcp/mcp_server.py",
+  "--profile-file",
+  "/absolute/path/to/tts-mcp/tts_profiles.json",
+  "--profile",
+  "codex"
+]
+env = { GOOGLE_APPLICATION_CREDENTIALS = "/absolute/path/to/tts-oauth-user.json" }
+startup_timeout_sec = 15
+tool_timeout_sec = 120
+enabled = true
+```
+
+Verify:
 
 ```bash
-GOOGLE_APPLICATION_CREDENTIALS=$HOME/.config/gcp/tts-oauth-user.json
+codex mcp list
+codex mcp get speech
 ```
 
-Prompting tip in OpenCode:
-- Add guidance in your agent instructions: "When user asks for spoken output, call `tts_speak`."
-- Add `use speech` in prompts to strongly bias OpenCode toward that MCP server.
-- OpenCode prefixes MCP tools with server name, so this appears as `speech_tts_speak`, `speech_tts_doctor`, and `speech_tts_stop`.
+## Claude Code CLI
 
-## Codex CLI (secondary)
+Add the server:
 
-Use the same stdio server command and env var as OpenCode. Register the server in Codex MCP config using a local command transport.
+```bash
+claude mcp add --transport stdio --scope user \
+  --env GOOGLE_APPLICATION_CREDENTIALS="<CREDS_JSON>" \
+  speech -- \
+  "<REPO_DIR>/.venv/bin/python" "<REPO_DIR>/mcp_server.py" \
+  --profile-file "<REPO_DIR>/tts_profiles.json" \
+  --profile claude_code
+```
 
-## Cloud Code (secondary)
+Verify:
 
-Use the same stdio command and credentials env var. Register as a local MCP tool server.
+```bash
+claude mcp list
+```
 
-## GitHub CLI (later)
+## Prompting tips
 
-Treat as follow-up integration. MCP patterns in GitHub CLI workflows are less standardized than OpenCode/Codex-style MCP clients.
+- Use hints like `use speech` when you want spoken output.
+- Most clients prefix tool names with server name, so you may see:
+  - `speech_tts_speak`
+  - `speech_tts_doctor`
+  - `speech_tts_stop`
+
+## Troubleshooting
+
+- If a client cannot connect after changes, restart that client session.
+- Keep credentials explicit in MCP `env` for portability.
+- Run `make mcp-doctor MCP_PROFILE=<profile>` to validate profile/auth/player readiness.

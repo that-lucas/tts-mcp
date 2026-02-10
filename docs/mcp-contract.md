@@ -26,7 +26,7 @@ Output (success):
 - `chars` (int)
 - `played` (bool)
 - `profile` (object with effective fixed settings)
-- `usage` (object with month-to-date local estimate)
+- `usage` (object with month-to-date local usage counters)
 - optional `playback_error`
 
 Notes:
