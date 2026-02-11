@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from tts_core.auth import create_tts_client
@@ -38,7 +38,7 @@ def parse_args() -> argparse.Namespace:
 def _resolve_output_path(args: argparse.Namespace) -> Path:
     if args.out:
         return Path(args.out).expanduser().resolve()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stamp = now.strftime("%Y-%m-%d-%H-%M-%S") + f"-{now.microsecond // 1000:03d}"
     return Path(f"{stamp}.{args.format}").resolve()
 
@@ -78,7 +78,7 @@ def main() -> None:
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     usage_log = Path(args.usage_log).expanduser().resolve()
 
     append_usage_row(

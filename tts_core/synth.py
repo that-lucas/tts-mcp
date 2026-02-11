@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from google.cloud import texttospeech
@@ -59,7 +59,7 @@ def read_text_input(*, text: str, text_file: str) -> str:
 
 def timestamped_output_path(*, audio_format: str, output_dir: Path, prefix: str = "speech") -> Path:
     _ = prefix
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     stamp = now.strftime("%Y-%m-%d-%H-%M-%S") + f"-{now.microsecond // 1000:03d}"
     return output_dir / f"{stamp}.{audio_format}"
 

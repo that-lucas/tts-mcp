@@ -22,6 +22,10 @@ usage_log.csv
 *.mp3
 *.ogg
 
+# Build artifacts
+dist/
+*.egg-info/
+
 # IDE/editor
 .idea/
 .vscode/

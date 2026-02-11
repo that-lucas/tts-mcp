@@ -7,7 +7,7 @@ import json
 import os
 import shutil
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,15 +20,15 @@ from tts_core.synth import SynthesisRequest, read_text_input, synthesize_to_file
 from tts_core.usage import append_usage_row, create_usage_snapshot
 from tts_core.voices import list_voices
 
-PROFILE_FILE_ENV = "GTTS_PROFILE_FILE"
+PROFILES_ENV = "GTTS_PROFILES"
 PROFILE_NAME_ENV = "GTTS_PROFILE"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Google TTS MCP server")
     parser.add_argument(
-        "--profile-file",
-        default=os.getenv(PROFILE_FILE_ENV, str(Path(__file__).resolve().parent / "tts_profiles.json")),
+        "--profiles",
+        default=os.getenv(PROFILES_ENV, "./tts_profiles.json"),
         help="Path to TTS profile JSON file.",
     )
     parser.add_argument(
@@ -150,7 +150,7 @@ def create_server(profile_file: str, profile_name: str) -> FastMCP:
                 ),
             )
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             append_usage_row(
                 profile.usage_log,
                 timestamp_utc=now,
@@ -225,10 +225,10 @@ def main() -> None:
     configure_logging(level="ERROR")
     args = parse_args()
     if args.doctor:
-        print(json.dumps(doctor_report(args.profile_file, args.profile), indent=2))
+        print(json.dumps(doctor_report(args.profiles, args.profile), indent=2))
         return
 
-    server = create_server(args.profile_file, args.profile)
+    server = create_server(args.profiles, args.profile)
     server.run(show_banner=False)
 
 

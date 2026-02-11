@@ -48,9 +48,7 @@ def main() -> None:
     )
 
     if not creds.refresh_token:
-        raise SystemExit(
-            "OAuth did not return a refresh token. Re-run and ensure consent is granted."
-        )
+        raise SystemExit("OAuth did not return a refresh token. Re-run and ensure consent is granted.")
 
     payload = {
         "type": "authorized_user",

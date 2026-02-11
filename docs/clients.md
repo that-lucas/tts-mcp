@@ -28,7 +28,7 @@ Edit `~/.config/opencode/opencode.jsonc` and add:
       "command": [
         "<ABS_PATH_TO_REPO>/.venv/bin/python",
         "<ABS_PATH_TO_REPO>/mcp_server.py",
-        "--profile-file",
+        "--profiles",
         "<ABS_PATH_TO_REPO>/tts_profiles.json",
         "--profile",
         "opencode"
@@ -58,7 +58,7 @@ Edit `~/.codex/config.toml` and add:
 command = "<ABS_PATH_TO_REPO>/.venv/bin/python"
 args = [
   "<ABS_PATH_TO_REPO>/mcp_server.py",
-  "--profile-file",
+  "--profiles",
   "<ABS_PATH_TO_REPO>/tts_profiles.json",
   "--profile",
   "codex"
@@ -85,7 +85,7 @@ claude mcp add --transport stdio --scope user \
   --env GOOGLE_APPLICATION_CREDENTIALS="<ABS_PATH_TO_CREDENTIALS_JSON>" \
   speech -- \
   "<ABS_PATH_TO_REPO>/.venv/bin/python" "<ABS_PATH_TO_REPO>/mcp_server.py" \
-  --profile-file "<ABS_PATH_TO_REPO>/tts_profiles.json" \
+  --profiles "<ABS_PATH_TO_REPO>/tts_profiles.json" \
   --profile claude_code
 ```
 
