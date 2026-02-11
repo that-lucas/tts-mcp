@@ -47,6 +47,7 @@ help:
 setup:
 	@test -d "$(VENV)" || $(PYTHON) -m venv "$(VENV)"
 	@$(PIP) install --quiet -r requirements.txt
+	@git config core.hooksPath .githooks
 
 oauth-login: setup
 	@if [[ -z "$(CLIENT_SECRET)" ]]; then \
