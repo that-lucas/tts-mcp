@@ -1,24 +1,33 @@
 # Client Setup
 
-This guide shows how to register this server in different MCP-capable clients.
+This guide shows how to register the tts-mcp server in different MCP clients.
 
-Use absolute paths in all client configs.
+## Prerequisites
 
-## Shared values
+1. Install: `pip install tts-mcp`
+2. Have a `tts_profiles.json` file (copy from `tts_profiles.example.json`)
+3. Have a Google credential file (see README for setup)
 
-- `ABS_PATH_TO_REPO`: absolute path to this repository
-- `ABS_PATH_TO_CREDENTIALS_JSON`: absolute path to your Google credential file
+Replace `/path/to/tts_profiles.json` and `/path/to/tts-oauth-user.json` with your actual absolute paths.
 
-Example:
+## Claude Code
 
 ```bash
-ABS_PATH_TO_REPO=/absolute/path/to/tts-mcp
-ABS_PATH_TO_CREDENTIALS_JSON=/absolute/path/to/tts-oauth-user.json
+claude mcp add --transport stdio --scope user \
+  --env GOOGLE_APPLICATION_CREDENTIALS="/path/to/tts-oauth-user.json" \
+  speech -- \
+  tts-mcp --profiles /path/to/tts_profiles.json --profile claude_code
+```
+
+Verify:
+
+```bash
+claude mcp list
 ```
 
 ## OpenCode
 
-Edit `~/.config/opencode/opencode.jsonc` and add:
+Edit `~/.config/opencode/opencode.jsonc`:
 
 ```jsonc
 {
@@ -26,15 +35,12 @@ Edit `~/.config/opencode/opencode.jsonc` and add:
     "speech": {
       "type": "local",
       "command": [
-        "<ABS_PATH_TO_REPO>/.venv/bin/python",
-        "<ABS_PATH_TO_REPO>/mcp_server.py",
-        "--profiles",
-        "<ABS_PATH_TO_REPO>/tts_profiles.json",
-        "--profile",
-        "opencode"
+        "tts-mcp",
+        "--profiles", "/path/to/tts_profiles.json",
+        "--profile", "opencode"
       ],
       "environment": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "<ABS_PATH_TO_CREDENTIALS_JSON>"
+        "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/tts-oauth-user.json"
       },
       "enabled": true,
       "timeout": 120000
@@ -51,19 +57,16 @@ opencode mcp list
 
 ## Codex CLI
 
-Edit `~/.codex/config.toml` and add:
+Edit `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.speech]
-command = "<ABS_PATH_TO_REPO>/.venv/bin/python"
+command = "tts-mcp"
 args = [
-  "<ABS_PATH_TO_REPO>/mcp_server.py",
-  "--profiles",
-  "<ABS_PATH_TO_REPO>/tts_profiles.json",
-  "--profile",
-  "codex"
+  "--profiles", "/path/to/tts_profiles.json",
+  "--profile", "codex"
 ]
-env = { GOOGLE_APPLICATION_CREDENTIALS = "<ABS_PATH_TO_CREDENTIALS_JSON>" }
+env = { GOOGLE_APPLICATION_CREDENTIALS = "/path/to/tts-oauth-user.json" }
 startup_timeout_sec = 15
 tool_timeout_sec = 120
 enabled = true
@@ -76,35 +79,27 @@ codex mcp list
 codex mcp get speech
 ```
 
-## Claude Code CLI
+## Using uvx (no global install)
 
-Add the server:
+Any client can use `uvx` instead of a global pip install. Replace the command with:
 
-```bash
-claude mcp add --transport stdio --scope user \
-  --env GOOGLE_APPLICATION_CREDENTIALS="<ABS_PATH_TO_CREDENTIALS_JSON>" \
-  speech -- \
-  "<ABS_PATH_TO_REPO>/.venv/bin/python" "<ABS_PATH_TO_REPO>/mcp_server.py" \
-  --profiles "<ABS_PATH_TO_REPO>/tts_profiles.json" \
-  --profile claude_code
-```
-
-Verify:
-
-```bash
-claude mcp list
+```json
+{
+  "command": "uvx",
+  "args": ["tts-mcp", "--profiles", "/path/to/tts_profiles.json", "--profile", "opencode"]
+}
 ```
 
 ## Prompting tips
 
 - Use hints like `use speech` when you want spoken output.
-- Most clients prefix tool names with server name, so you may see:
+- Most clients prefix tool names with the server name:
   - `speech_tts_speak`
   - `speech_tts_doctor`
   - `speech_tts_stop`
 
 ## Troubleshooting
 
-- If a client cannot connect after changes, restart that client session.
-- Keep credentials explicit in MCP `env` for portability.
-- Run `make mcp-doctor MCP_PROFILE=<profile>` to validate profile/auth/player readiness.
+- If a client cannot connect after changes, restart the client session.
+- Keep credentials explicit in the MCP `env` block for portability.
+- Run `tts-mcp --doctor --profiles /path/to/tts_profiles.json` to validate profile, auth, and player readiness.

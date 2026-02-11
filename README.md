@@ -1,133 +1,78 @@
-# TTS MCP (Google Cloud Text-to-Speech)
+# tts-mcp
 
-Profile-driven MCP server and local CLI tools for Google Cloud Text-to-Speech.
+Profile-driven MCP server for Google Cloud Text-to-Speech.
 
-This project is currently Google-specific. You can switch voices/models within Google through profiles, while keeping the same MCP tool interface.
+Exposes three tools to any MCP client:
 
-## What this project provides
+- **`tts_speak`** — synthesize text to audio and auto-play it
+- **`tts_doctor`** — run diagnostics on auth, profile, and playback
+- **`tts_stop`** — stop any currently playing audio
 
-- MCP server with simple speech tools:
-  - `tts_speak(text|text_file, speaking_rate, pitch)`
-  - `tts_doctor()`
-  - `tts_stop()`
-- Profile-fixed runtime settings (not exposed to the model):
-  - voice, language, model, format, output_dir, autoplay behavior
-- Local CLI helpers for direct testing and voice exploration
-- Non-blocking autoplay with local file persistence
+Voice, language, model, and format are locked per profile — the LLM can only control text content, speaking rate, and pitch.
 
-## Quick start
+## Install
 
 ```bash
-git clone git@github.com:that-lucas/tts-mcp.git
-cd tts-mcp
-export ABS_PATH_TO_REPO="$(pwd)"
-
-make setup
-make doctor
+pip install tts-mcp
 ```
 
-## Requirements
+Or with [uvx](https://docs.astral.sh/uv/) (no install needed):
+
+```bash
+uvx tts-mcp --help
+```
+
+## Prerequisites
 
 - Python 3.11+
-- Google Cloud project with billing enabled
-- Google Cloud Text-to-Speech API enabled
-- macOS playback uses `afplay` by default (configurable)
+- A Google Cloud project with billing and the **Cloud Text-to-Speech API** enabled
+- Google OAuth or service account credentials
+- macOS uses `afplay` for playback by default (configurable via profile)
 
-## Google Cloud account and authentication
+## Setup
 
-### 1) Create and prepare your Google Cloud project
+### 1. Create Google Cloud credentials
 
-1. Create or choose a Google Cloud project.
-2. Enable billing for that project.
-3. Enable **Cloud Text-to-Speech API**.
-
-### 2) Create OAuth credentials (recommended)
-
-1. In Google Cloud Console, open `APIs & Services -> Credentials`.
-2. Create `OAuth client ID`.
-3. Choose application type `Desktop app`.
-4. Download the OAuth client JSON file.
-
-### 3) Generate user credentials for this project
+1. In Google Cloud Console, go to **APIs & Services > Credentials**.
+2. Create an **OAuth client ID** (Desktop app) and download the JSON file.
+3. Generate user credentials:
 
 ```bash
-cd "$ABS_PATH_TO_REPO"
-source .venv/bin/activate
-
-python oauth_login.py \
-  --client-secret-file "<PATH_TO_OAUTH_CLIENT_JSON>" \
-  --out "$HOME/.config/gcp/tts-oauth-user.json" \
-  --quota-project "<GCP_PROJECT_ID>"
+tts-oauth \
+  --client-secret-file ~/Downloads/client_secret.json \
+  --out ~/.config/gcp/tts-oauth-user.json \
+  --quota-project YOUR_PROJECT_ID
 ```
 
-### 4) Set `GOOGLE_APPLICATION_CREDENTIALS`
+### 2. Create a profiles file
 
-You can set it in your shell profile (recommended), for example in Fish:
-
-```fish
-set --global --export GOOGLE_APPLICATION_CREDENTIALS "$HOME/.config/gcp/tts-oauth-user.json"
-```
-
-Or pass it explicitly in each MCP client config (recommended for portability/reliability).
-
-## Local CLI usage
+Copy the example and customize:
 
 ```bash
-make help
-make setup
-make speak TEXT="Hello from Google TTS" OUT=./out/hello.wav FORMAT=wav
-make voices VOICES_LANGUAGE=en-US VOICE_FAMILY=Chirp3
-make speak-test VOICE=en-US-Chirp3-HD-Fenrir
+cp tts_profiles.example.json tts_profiles.json
 ```
 
-## Profile system
+Each profile fixes voice, language, model, format, output directory, and playback settings. See [`tts_profiles.example.json`](tts_profiles.example.json) for the full schema.
 
-Profiles are defined in:
+### 3. Set credentials
 
-- `tts_profiles.json` (active)
-- `tts_profiles.example.json` (reference)
-
-Each profile fixes:
-
-- `voice`
-- `language`
-- `model`
-- `format`
-- `speaking_rate` (default used by MCP, still overridable per call)
-- `pitch` (default used by MCP, still overridable per call)
-- `output_dir`
-- `usage_log`
-- `autoplay`
-- `player_command`
-
-Current example profiles include `opencode`, `codex`, and `claude_code`.
-
-## MCP server behavior
-
-- Playback is launched in background mode (non-blocking).
-- Output files are always saved.
-- Default filename pattern:
-  - `YYYY-MM-DD-HH-MM-SS-MMM.wav` (or `.mp3` / `.ogg`)
-
-Run MCP diagnostics:
+Either export globally:
 
 ```bash
-make mcp-doctor MCP_PROFILE=opencode
+export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcp/tts-oauth-user.json"
 ```
 
-Run MCP server manually:
+Or pass explicitly per MCP client config (recommended).
+
+## MCP client setup
+
+### Claude Code
 
 ```bash
-make mcp-run MCP_PROFILE=opencode
-```
-
-## Client setup
-
-Use an absolute repository path in all client configs.
-
-```bash
-export ABS_PATH_TO_REPO="/absolute/path/to/tts-mcp"
-export ABS_PATH_TO_CREDENTIALS_JSON="/absolute/path/to/tts-oauth-user.json"
+claude mcp add --transport stdio --scope user \
+  --env GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcp/tts-oauth-user.json" \
+  speech -- \
+  tts-mcp --profiles /path/to/tts_profiles.json --profile claude_code
 ```
 
 ### OpenCode
@@ -140,15 +85,12 @@ Edit `~/.config/opencode/opencode.jsonc`:
     "speech": {
       "type": "local",
       "command": [
-        "<ABS_PATH_TO_REPO>/.venv/bin/python",
-        "<ABS_PATH_TO_REPO>/mcp_server.py",
-        "--profiles",
-        "<ABS_PATH_TO_REPO>/tts_profiles.json",
-        "--profile",
-        "opencode"
+        "tts-mcp",
+        "--profiles", "/path/to/tts_profiles.json",
+        "--profile", "opencode"
       ],
       "environment": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "<ABS_PATH_TO_CREDENTIALS_JSON>"
+        "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/tts-oauth-user.json"
       },
       "enabled": true,
       "timeout": 120000
@@ -157,76 +99,104 @@ Edit `~/.config/opencode/opencode.jsonc`:
 }
 ```
 
-Verify:
-
-```bash
-opencode mcp list
-```
-
 ### Codex CLI
 
 Edit `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.speech]
-command = "<ABS_PATH_TO_REPO>/.venv/bin/python"
+command = "tts-mcp"
 args = [
-  "<ABS_PATH_TO_REPO>/mcp_server.py",
-  "--profiles",
-  "<ABS_PATH_TO_REPO>/tts_profiles.json",
-  "--profile",
-  "codex"
+  "--profiles", "/path/to/tts_profiles.json",
+  "--profile", "codex"
 ]
-env = { GOOGLE_APPLICATION_CREDENTIALS = "<ABS_PATH_TO_CREDENTIALS_JSON>" }
-startup_timeout_sec = 15
-tool_timeout_sec = 120
-enabled = true
+env = { GOOGLE_APPLICATION_CREDENTIALS = "/path/to/tts-oauth-user.json" }
 ```
 
-Verify:
+### Using uvx (no global install)
 
-```bash
-codex mcp list
-codex mcp get speech
+Any client config can use `uvx` instead of installing globally:
+
+```json
+{
+  "command": "uvx",
+  "args": ["tts-mcp", "--profiles", "/path/to/tts_profiles.json", "--profile", "opencode"]
+}
 ```
 
-### Claude Code CLI
+## Usage
 
-Add server:
-
-```bash
-claude mcp add --transport stdio --scope user \
-  --env GOOGLE_APPLICATION_CREDENTIALS="<ABS_PATH_TO_CREDENTIALS_JSON>" \
-  speech -- \
-  "<ABS_PATH_TO_REPO>/.venv/bin/python" "<ABS_PATH_TO_REPO>/mcp_server.py" \
-  --profiles "<ABS_PATH_TO_REPO>/tts_profiles.json" \
-  --profile claude_code
-```
-
-Verify:
-
-```bash
-claude mcp list
-```
-
-## Using speech from prompts
-
-In MCP-enabled clients, ask naturally and hint tool usage, for example:
+In any MCP-enabled client, prompt naturally:
 
 - `Summarize this and read it aloud. use speech`
 - `Stop current playback. use speech`
 
-Depending on the client, tool names may appear prefixed (for example, `speech_tts_speak`, `speech_tts_stop`).
+Tool names may appear prefixed by the client (e.g. `speech_tts_speak`, `speech_tts_stop`).
+
+## CLI tools
+
+The package also installs standalone CLI commands:
+
+| Command      | Description                              |
+| ------------ | ---------------------------------------- |
+| `tts-mcp`    | Start the MCP server                     |
+| `tts-speak`  | Synthesize text to audio from the CLI    |
+| `tts-voices` | List available Google TTS voices         |
+| `tts-batch`  | Generate samples for multiple voices     |
+| `tts-oauth`  | Run the OAuth credential setup flow      |
+
+```bash
+tts-speak --text "Hello world" --voice en-US-Chirp3-HD-Fenrir --format wav --out hello.wav
+tts-voices --language en-US --family Chirp3
+tts-mcp --doctor --profiles tts_profiles.json --profile opencode
+```
+
+## Profile system
+
+Profiles are defined in a JSON file (see [`tts_profiles.example.json`](tts_profiles.example.json)):
+
+```json
+{
+  "default_profile": "opencode",
+  "profiles": {
+    "opencode": {
+      "voice": "en-US-Chirp3-HD-Fenrir",
+      "language": "en-US",
+      "model": "models/chirp3-hd",
+      "format": "wav",
+      "speaking_rate": 1.0,
+      "pitch": 0.0,
+      "output_dir": "./out",
+      "usage_log": "./usage_log.csv",
+      "autoplay": true,
+      "player_command": ["afplay", "{file}"]
+    }
+  }
+}
+```
+
+Each profile locks: `voice`, `language`, `model`, `format`, `output_dir`, `usage_log`, `autoplay`, and `player_command`. Only `speaking_rate` and `pitch` can be overridden per tool call.
 
 ## Troubleshooting
 
-- **MCP startup handshake fails (Codex):** ensure no stdout/stderr banner noise from server startup and verify command path points to project venv.
-- **Tool timeout while audio plays:** this server uses non-blocking playback; if timeout persists, increase client `tool_timeout`.
-- **No audio output:** verify player binary (`afplay`) exists, or change `player_command` in profile.
-- **Auth errors:** confirm `GOOGLE_APPLICATION_CREDENTIALS` points to a valid JSON credential file.
+- **Auth errors** — confirm `GOOGLE_APPLICATION_CREDENTIALS` points to a valid credential file.
+- **No audio** — verify the player binary (e.g. `afplay`) exists, or change `player_command` in your profile.
+- **Tool timeout** — playback is non-blocking, but if timeouts persist, increase the client's `tool_timeout`.
+- **Run diagnostics** — `tts-mcp --doctor --profiles tts_profiles.json` checks auth, profile, voice, and player.
 
-## Security notes
+## Development
 
-- Do not commit credential files.
-- Keep OAuth client secrets and authorized-user JSON files outside the repo.
-- Review `.gitignore` before committing local artifacts.
+```bash
+git clone git@github.com:that-lucas/tts-mcp.git
+cd tts-mcp
+make setup
+pip install -e ".[dev]"
+pytest
+ruff check .
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## License
+
+MIT
