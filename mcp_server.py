@@ -6,7 +6,6 @@ import argparse
 import json
 import os
 import shutil
-from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -51,11 +50,25 @@ def load_runtime(profile_file: str, profile_name: str) -> tuple[TTSProfile, Any]
 
 
 def doctor_report(profile_file: str, profile_name: str) -> dict[str, Any]:
+    # Resolve credentials: explicit env var or gcloud ADC well-known path
+    creds_env = os.getenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+    adc_path = Path("~/.config/gcloud/application_default_credentials.json").expanduser()
+    if creds_env:
+        credentials_path = creds_env
+        credentials_source = "env_var"
+    elif adc_path.exists():
+        credentials_path = str(adc_path)
+        credentials_source = "gcloud_adc"
+    else:
+        credentials_path = ""
+        credentials_source = "not_found"
+
     report: dict[str, Any] = {
         "ok": True,
         "profile_file": str(Path(profile_file).expanduser().resolve()),
         "profile_name": profile_name or "<default>",
-        "credentials_path": os.getenv("GOOGLE_APPLICATION_CREDENTIALS", ""),
+        "credentials_path": credentials_path,
+        "credentials_source": credentials_source,
         "credentials_found": False,
         "profile_loaded": False,
         "client_ready": False,
@@ -64,9 +77,8 @@ def doctor_report(profile_file: str, profile_name: str) -> dict[str, Any]:
         "notes": [],
     }
 
-    creds = report["credentials_path"]
-    if creds:
-        report["credentials_found"] = Path(creds).expanduser().exists()
+    if credentials_path:
+        report["credentials_found"] = Path(credentials_path).expanduser().exists()
 
     try:
         profile, client = load_runtime(profile_file, profile_name)
@@ -101,7 +113,7 @@ def doctor_report(profile_file: str, profile_name: str) -> dict[str, Any]:
         report["error"] = str(exc)
 
     if not report["credentials_found"]:
-        report["notes"].append("Set GOOGLE_APPLICATION_CREDENTIALS to your OAuth or service-account JSON file.")
+        report["notes"].append("No credentials found. Run 'gcloud auth application-default login' to authenticate.")
     if report["profile_loaded"] and not report["voice_available"]:
         report["notes"].append("Configured voice is not currently available in the selected language.")
 
@@ -160,7 +172,9 @@ def create_server(profile_file: str, profile_name: str) -> FastMCP:
                 audio_format=result.audio_format,
                 output_file=result.output_file,
             )
-            usage = create_usage_snapshot(profile.usage_log, chars_this_request=result.chars, now_utc=now)
+            usage = create_usage_snapshot(
+                profile.usage_log, chars_this_request=result.chars, voice=result.voice, now_utc=now
+            )
 
             played = False
             playback_error = ""
@@ -185,7 +199,20 @@ def create_server(profile_file: str, profile_name: str) -> FastMCP:
                     "speaking_rate": speaking_rate,
                     "pitch": pitch,
                 },
-                "usage": asdict(usage),
+                "usage": {
+                    "chars_this_request": usage.chars_this_request,
+                    "voice_family": usage.voice_family,
+                    "month_key": usage.month_key,
+                    "month_to_date_by_family": {
+                        fam: {
+                            "chars": fu.chars,
+                            "free_tier": fu.free_tier,
+                            "billable_chars": fu.billable_chars,
+                            "estimated_cost_usd": fu.estimated_cost_usd,
+                        }
+                        for fam, fu in usage.month_to_date_by_family.items()
+                    },
+                },
             }
             if playback_error:
                 response["playback_error"] = playback_error

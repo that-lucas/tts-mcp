@@ -16,6 +16,7 @@ venv/
 out/
 voices/
 usage_log.csv
+tts_profiles.json
 
 # Audio outputs
 *.wav

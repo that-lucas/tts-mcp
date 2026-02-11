@@ -6,7 +6,7 @@ Thanks for your interest in contributing to tts-mcp.
 
 - Python 3.11+
 - A Google Cloud project with the Text-to-Speech API enabled
-- OAuth credentials (see README for setup)
+- Google Cloud CLI authenticated (`gcloud auth application-default login` — see README)
 
 ## Development setup
 

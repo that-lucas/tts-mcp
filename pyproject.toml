@@ -24,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
     "google-cloud-texttospeech >= 2.27.0",
-    "google-auth-oauthlib >= 1.2.1",
     "fastmcp >= 2.0, < 3",
 ]
 
@@ -38,7 +37,7 @@ tts-mcp   = "mcp_server:main"
 tts-speak  = "speak:main"
 tts-voices = "list_voices:main"
 tts-batch  = "batch_generate_us:main"
-tts-oauth  = "oauth_login:main"
+
 
 [project.optional-dependencies]
 dev = [
@@ -55,7 +54,7 @@ packages = ["tts_core"]
 "speak.py" = "speak.py"
 "list_voices.py" = "list_voices.py"
 "batch_generate_us.py" = "batch_generate_us.py"
-"oauth_login.py" = "oauth_login.py"
+
 
 # -- Ruff --
 

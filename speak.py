@@ -91,14 +91,17 @@ def main() -> None:
         output_file=result.output_file,
     )
 
-    snapshot = create_usage_snapshot(usage_log, chars_this_request=result.chars, now_utc=now)
+    snapshot = create_usage_snapshot(usage_log, chars_this_request=result.chars, voice=result.voice, now_utc=now)
 
     print(f"Wrote audio: {result.output_file}")
     print(f"Characters this request: {result.chars}")
     print(f"Voice: {result.voice}")
     if result.model:
         print(f"Model: {result.model}")
-    print(f"Month-to-date characters (from local log): {snapshot.month_to_date_chars}")
+    family_usage = snapshot.month_to_date_by_family.get(snapshot.voice_family)
+    if family_usage:
+        fam = snapshot.voice_family
+        print(f"Month-to-date ({fam}): {family_usage.chars:,} chars (free tier: {family_usage.free_tier:,})")
     if args.ssml:
         print("Note: SSML billing can differ slightly from plain character counting.")
 

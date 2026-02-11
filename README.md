@@ -25,24 +25,21 @@ uvx tts-mcp --help
 ## Prerequisites
 
 - Python 3.11+
-- A Google Cloud project with billing and the **Cloud Text-to-Speech API** enabled
-- Google OAuth or service account credentials
+- A [Google Cloud project](https://console.cloud.google.com/freetrial) with the **Cloud Text-to-Speech API** enabled
+  - Google offers a generous free tier — up to **4 million characters/month** for Standard/WaveNet voices and **1 million characters/month** for Neural2, Polyglot, and Chirp3 HD voices, more than enough for most individual use. See [TTS pricing](https://cloud.google.com/text-to-speech/pricing) for details.
+- [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`) for authentication
 - macOS uses `afplay` for playback by default (configurable via profile)
 
 ## Setup
 
-### 1. Create Google Cloud credentials
-
-1. In Google Cloud Console, go to **APIs & Services > Credentials**.
-2. Create an **OAuth client ID** (Desktop app) and download the JSON file.
-3. Generate user credentials:
+### 1. Authenticate with Google Cloud
 
 ```bash
-tts-oauth \
-  --client-secret-file ~/Downloads/client_secret.json \
-  --out ~/.config/gcp/tts-oauth-user.json \
-  --quota-project YOUR_PROJECT_ID
+gcloud auth application-default login
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
 ```
+
+This stores credentials at `~/.config/gcloud/application_default_credentials.json`, which the TTS client discovers automatically. No environment variables needed.
 
 ### 2. Create a profiles file
 
@@ -54,23 +51,12 @@ cp tts_profiles.example.json tts_profiles.json
 
 Each profile fixes voice, language, model, format, output directory, and playback settings. See [`tts_profiles.example.json`](tts_profiles.example.json) for the full schema.
 
-### 3. Set credentials
-
-Either export globally:
-
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcp/tts-oauth-user.json"
-```
-
-Or pass explicitly per MCP client config (recommended).
-
 ## MCP client setup
 
 ### Claude Code
 
 ```bash
 claude mcp add --transport stdio --scope user \
-  --env GOOGLE_APPLICATION_CREDENTIALS="$HOME/.config/gcp/tts-oauth-user.json" \
   speech -- \
   tts-mcp --profiles /path/to/tts_profiles.json --profile claude_code
 ```
@@ -89,9 +75,6 @@ Edit `~/.config/opencode/opencode.jsonc`:
         "--profiles", "/path/to/tts_profiles.json",
         "--profile", "opencode"
       ],
-      "environment": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/tts-oauth-user.json"
-      },
       "enabled": true,
       "timeout": 120000
     }
@@ -110,7 +93,6 @@ args = [
   "--profiles", "/path/to/tts_profiles.json",
   "--profile", "codex"
 ]
-env = { GOOGLE_APPLICATION_CREDENTIALS = "/path/to/tts-oauth-user.json" }
 ```
 
 ### Using uvx (no global install)
@@ -143,7 +125,6 @@ The package also installs standalone CLI commands:
 | `tts-speak`  | Synthesize text to audio from the CLI    |
 | `tts-voices` | List available Google TTS voices         |
 | `tts-batch`  | Generate samples for multiple voices     |
-| `tts-oauth`  | Run the OAuth credential setup flow      |
 
 ```bash
 tts-speak --text "Hello world" --voice en-US-Chirp3-HD-Fenrir --format wav --out hello.wav
@@ -179,7 +160,7 @@ Each profile locks: `voice`, `language`, `model`, `format`, `output_dir`, `usage
 
 ## Troubleshooting
 
-- **Auth errors** — confirm `GOOGLE_APPLICATION_CREDENTIALS` points to a valid credential file.
+- **Auth errors** — run `gcloud auth application-default login`, or confirm `GOOGLE_APPLICATION_CREDENTIALS` is set.
 - **No audio** — verify the player binary (e.g. `afplay`) exists, or change `player_command` in your profile.
 - **Tool timeout** — playback is non-blocking, but if timeouts persist, increase the client's `tool_timeout`.
 - **Run diagnostics** — `tts-mcp --doctor --profiles tts_profiles.json` checks auth, profile, voice, and player.

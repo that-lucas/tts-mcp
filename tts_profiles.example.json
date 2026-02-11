@@ -1,7 +1,9 @@
 {
-  "default_profile": "opencode",
+  "_comment": "Example profiles showing different Google TTS model tiers. Copy this file to tts_profiles.json and customize.",
+  "default_profile": "casual",
   "profiles": {
-    "opencode": {
+    "chirp3": {
+      "_comment": "Chirp3-HD: highest quality, most natural. Requires model field. $30/1M chars. Voices: Achernar, Achird, Algenib, Algieba, Alnilam, Aoede, Autonoe, Callirrhoe, Charon, Despina, Enceladus, Erinome, Fenrir, Gacrux, Iapetus, Kore, Laomedeia, Leda, Orus, Puck, Pulcherrima, Rasalgethi, Sadachbia, Sadaltager, Schedar, Sulafat, Umbriel, Vindemiatrix, Zephyr, Zubenelgenubi.",
       "voice": "en-US-Chirp3-HD-Fenrir",
       "language": "en-US",
       "model": "models/chirp3-hd",
@@ -16,10 +18,11 @@
         "{file}"
       ]
     },
-    "codex": {
-      "voice": "en-US-Chirp3-HD-Achird",
+    "chirp": {
+      "_comment": "Chirp-HD: older HD model, 3 voices only (D, F, O). Pricing not listed separately, likely $30/1M chars.",
+      "voice": "en-US-Chirp-HD-F",
       "language": "en-US",
-      "model": "models/chirp3-hd",
+      "model": "",
       "format": "wav",
       "speaking_rate": 1.0,
       "pitch": 0.0,
@@ -31,10 +34,11 @@
         "{file}"
       ]
     },
-    "claude_code": {
-      "voice": "en-US-Chirp3-HD-Sadaltager",
+    "studio": {
+      "_comment": "Studio: high quality, limited voice selection. No model field needed. $160/1M chars. Voices: O, Q.",
+      "voice": "en-US-Studio-Q",
       "language": "en-US",
-      "model": "models/chirp3-hd",
+      "model": "",
       "format": "wav",
       "speaking_rate": 1.0,
       "pitch": 0.0,
@@ -46,8 +50,89 @@
         "{file}"
       ]
     },
-    "low_cost": {
+    "casual": {
+      "_comment": "Casual: conversational, relaxed tone. Priced as Neural2. $16/1M chars. Voices: K.",
+      "voice": "en-US-Casual-K",
+      "language": "en-US",
+      "model": "",
+      "format": "ogg",
+      "speaking_rate": 1.0,
+      "pitch": 0.0,
+      "output_dir": "./out",
+      "usage_log": "./usage_log.csv",
+      "autoplay": true,
+      "player_command": [
+        "afplay",
+        "{file}"
+      ]
+    },
+    "news": {
+      "_comment": "News: optimized for news-reading style. Priced as Neural2. $16/1M chars. Voices: K, L, N.",
+      "voice": "en-US-News-K",
+      "language": "en-US",
+      "model": "",
+      "format": "ogg",
+      "speaking_rate": 1.0,
+      "pitch": 0.0,
+      "output_dir": "./out",
+      "usage_log": "./usage_log.csv",
+      "autoplay": true,
+      "player_command": [
+        "afplay",
+        "{file}"
+      ]
+    },
+    "polyglot": {
+      "_comment": "Polyglot: multilingual voice, works across multiple languages. $16/1M chars. Voices: 1.",
+      "voice": "en-US-Polyglot-1",
+      "language": "en-US",
+      "model": "",
+      "format": "ogg",
+      "speaking_rate": 1.0,
+      "pitch": 0.0,
+      "output_dir": "./out",
+      "usage_log": "./usage_log.csv",
+      "autoplay": true,
+      "player_command": [
+        "afplay",
+        "{file}"
+      ]
+    },
+    "neural2": {
+      "_comment": "Neural2: good quality, lower cost than Chirp3-HD and Studio. $16/1M chars. Voices: A, C, D, E, F, G, H, I, J.",
       "voice": "en-US-Neural2-D",
+      "language": "en-US",
+      "model": "",
+      "format": "ogg",
+      "speaking_rate": 1.0,
+      "pitch": 0.0,
+      "output_dir": "./out",
+      "usage_log": "./usage_log.csv",
+      "autoplay": true,
+      "player_command": [
+        "afplay",
+        "{file}"
+      ]
+    },
+    "wavenet": {
+      "_comment": "Wavenet: DeepMind WaveNet synthesis. $4/1M chars. Voices: A, B, C, D, E, F, G, H, I, J.",
+      "voice": "en-US-Wavenet-D",
+      "language": "en-US",
+      "model": "",
+      "format": "mp3",
+      "speaking_rate": 1.0,
+      "pitch": 0.0,
+      "output_dir": "./out",
+      "usage_log": "./usage_log.csv",
+      "autoplay": true,
+      "player_command": [
+        "afplay",
+        "{file}"
+      ]
+    },
+    "standard": {
+      "_comment": "Standard: basic quality, lowest cost. Good for high-volume use. $4/1M chars. Voices: A, B, C, D, E, F, G, H, I, J.",
+      "voice": "en-US-Standard-D",
       "language": "en-US",
       "model": "",
       "format": "mp3",

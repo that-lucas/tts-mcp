@@ -36,16 +36,20 @@ def test_doctor_report_load_failure(mock_lr, sample_profile_file):
 
 @patch("mcp_server.load_runtime")
 @patch("mcp_server.list_voices")
-def test_doctor_report_no_credentials_env(mock_voices, mock_lr, sample_profile_file, monkeypatch):
+def test_doctor_report_no_credentials(mock_voices, mock_lr, sample_profile_file, monkeypatch, tmp_path):
     from tts_core.profile import load_profile
 
     monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
+    # Point HOME to an empty temp dir so the gcloud ADC well-known path doesn't exist
+    monkeypatch.setenv("HOME", str(tmp_path))
+
     profile = load_profile(sample_profile_file, "test")
     mock_lr.return_value = (profile, MagicMock())
     mock_voices.return_value = []
 
     report = doctor_report(str(sample_profile_file), "test")
-    assert any("GOOGLE_APPLICATION_CREDENTIALS" in n for n in report["notes"])
+    assert report["credentials_source"] == "not_found"
+    assert any("gcloud" in n for n in report["notes"])
 
 
 @patch("mcp_server.load_runtime")

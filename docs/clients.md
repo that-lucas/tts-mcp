@@ -6,15 +6,14 @@ This guide shows how to register the tts-mcp server in different MCP clients.
 
 1. Install: `pip install tts-mcp`
 2. Have a `tts_profiles.json` file (copy from `tts_profiles.example.json`)
-3. Have a Google credential file (see README for setup)
+3. Authenticated via `gcloud auth application-default login` (see README for setup)
 
-Replace `/path/to/tts_profiles.json` and `/path/to/tts-oauth-user.json` with your actual absolute paths.
+Replace `/path/to/tts_profiles.json` with your actual absolute path.
 
 ## Claude Code
 
 ```bash
 claude mcp add --transport stdio --scope user \
-  --env GOOGLE_APPLICATION_CREDENTIALS="/path/to/tts-oauth-user.json" \
   speech -- \
   tts-mcp --profiles /path/to/tts_profiles.json --profile claude_code
 ```
@@ -39,9 +38,6 @@ Edit `~/.config/opencode/opencode.jsonc`:
         "--profiles", "/path/to/tts_profiles.json",
         "--profile", "opencode"
       ],
-      "environment": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "/path/to/tts-oauth-user.json"
-      },
       "enabled": true,
       "timeout": 120000
     }
@@ -66,7 +62,6 @@ args = [
   "--profiles", "/path/to/tts_profiles.json",
   "--profile", "codex"
 ]
-env = { GOOGLE_APPLICATION_CREDENTIALS = "/path/to/tts-oauth-user.json" }
 startup_timeout_sec = 15
 tool_timeout_sec = 120
 enabled = true
@@ -101,5 +96,5 @@ Any client can use `uvx` instead of a global pip install. Replace the command wi
 ## Troubleshooting
 
 - If a client cannot connect after changes, restart the client session.
-- Keep credentials explicit in the MCP `env` block for portability.
+- Run `gcloud auth application-default login` if auth fails.
 - Run `tts-mcp --doctor --profiles /path/to/tts_profiles.json` to validate profile, auth, and player readiness.
