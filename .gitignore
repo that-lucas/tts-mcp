@@ -26,6 +26,9 @@ usage_log.csv
 dist/
 *.egg-info/
 
+# Test artifacts
+.coverage
+
 # IDE/editor
 .idea/
 .vscode/
