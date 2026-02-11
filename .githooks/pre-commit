@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#
+# Reject commits that use an email other than the project's expected one.
+#
+
+EXPECTED_EMAIL="138673432+that-lucas@users.noreply.github.com"
+ACTUAL_EMAIL="$(git config user.email)"
+
+if [ "$ACTUAL_EMAIL" != "$EXPECTED_EMAIL" ]; then
+    echo "ERROR: Committing with wrong email."
+    echo "  Current:  $ACTUAL_EMAIL"
+    echo "  Expected: $EXPECTED_EMAIL"
+    echo ""
+    echo "Fix with: git config user.email \"$EXPECTED_EMAIL\""
+    exit 1
+fi
