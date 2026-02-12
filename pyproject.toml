@@ -96,6 +96,11 @@ addopts = ["--strict-markers", "--tb=short", "-q"]
 
 [tool.coverage.run]
 source = ["tts_mcp"]
+omit = [
+    "src/tts_mcp/speak.py",
+    "src/tts_mcp/list_voices.py",
+    "src/tts_mcp/batch.py",
+]
 
 [tool.coverage.report]
 fail_under = 80

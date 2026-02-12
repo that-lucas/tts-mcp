@@ -3,14 +3,15 @@
 # Reject commits that use an email other than the project's expected one.
 #
 
-EXPECTED_EMAIL="138673432+that-lucas@users.noreply.github.com"
+EXPECTED_DOMAIN="users.noreply.github.com"
 ACTUAL_EMAIL="$(git config user.email)"
+ACTUAL_DOMAIN="${ACTUAL_EMAIL#*@}"
 
-if [ "$ACTUAL_EMAIL" != "$EXPECTED_EMAIL" ]; then
-    echo "ERROR: Committing with wrong email."
+if [ "$ACTUAL_DOMAIN" != "$EXPECTED_DOMAIN" ]; then
+    echo "ERROR: Committing with wrong email domain."
     echo "  Current:  $ACTUAL_EMAIL"
-    echo "  Expected: $EXPECTED_EMAIL"
+    echo "  Expected: *@$EXPECTED_DOMAIN"
     echo ""
-    echo "Fix with: git config user.email \"$EXPECTED_EMAIL\""
+    echo "Fix with: git config user.email \"<your-id>@$EXPECTED_DOMAIN\""
     exit 1
 fi
