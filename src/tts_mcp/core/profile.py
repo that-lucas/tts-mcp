@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -33,8 +34,13 @@ class StopAudioResult:
 
 
 def default_config_dir() -> Path:
-    """Return the XDG-compliant config directory: ~/.config/tts-mcp."""
-    return Path("~/.config").expanduser() / CONFIG_DIR_NAME
+    """Return the XDG config directory for tts-mcp.
+
+    Honors XDG_CONFIG_HOME if set, otherwise defaults to ~/.config.
+    """
+    xdg_config = os.environ.get("XDG_CONFIG_HOME", "")
+    base = Path(xdg_config) if xdg_config else Path("~/.config").expanduser()
+    return base / CONFIG_DIR_NAME
 
 
 def resolve_profile_path(explicit: str | None = None) -> Path:
