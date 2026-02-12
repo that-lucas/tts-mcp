@@ -62,7 +62,7 @@ def resolve_profile_path(explicit: str | None = None) -> Path:
 
     raise ValueError(
         "No profiles file found.\n"
-        "Run 'tts-mcp init' to create one at ~/.config/tts-mcp/profiles.json\n"
+        "Run 'tts-mcp --init' to create one at ~/.config/tts-mcp/profiles.json\n"
         "or specify a path with --profiles or the GTTS_PROFILES env var."
     )
 

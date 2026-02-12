@@ -21,7 +21,7 @@ TEST_OUT ?= ./out/test-sentence.mp3
 OUT_DIR ?= ./out
 VOICE_FAMILIES ?= Chirp3,Neural2
 LIMIT ?= 0
-MCP_PROFILES ?= ./tts_profiles.json
+MCP_PROFILES ?=
 MCP_PROFILE ?=
 
 .PHONY: help setup speak speak-ssml speak-test speak-us-all voices doctor mcp-setup mcp-run mcp-doctor
@@ -36,8 +36,8 @@ help:
 	@echo "  make voices [VOICES_LANGUAGE=en-US] [VOICE_FAMILY=Chirp3]"
 	@echo "  make doctor"
 	@echo "  make mcp-setup"
-	@echo "  make mcp-run [MCP_PROFILES=./tts_profiles.json] [MCP_PROFILE=opencode]"
-	@echo "  make mcp-doctor [MCP_PROFILES=./tts_profiles.json] [MCP_PROFILE=opencode]"
+	@echo "  make mcp-run [MCP_PROFILES=...] [MCP_PROFILE=opencode]"
+	@echo "  make mcp-doctor [MCP_PROFILES=...] [MCP_PROFILE=opencode]"
 
 setup:
 	@test -d "$(VENV)" || $(PYTHON) -m venv "$(VENV)"
@@ -117,11 +117,11 @@ mcp-setup: setup
 
 mcp-run: mcp-setup
 	@$(RUN) -m tts_mcp.server \
-		--profiles "$(MCP_PROFILES)" \
+		$(if $(MCP_PROFILES),--profiles "$(MCP_PROFILES)") \
 		$(if $(MCP_PROFILE),--profile "$(MCP_PROFILE)")
 
 mcp-doctor: mcp-setup
 	@$(RUN) -m tts_mcp.server \
-		--profiles "$(MCP_PROFILES)" \
+		$(if $(MCP_PROFILES),--profiles "$(MCP_PROFILES)") \
 		$(if $(MCP_PROFILE),--profile "$(MCP_PROFILE)") \
 		--doctor

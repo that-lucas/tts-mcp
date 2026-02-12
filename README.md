@@ -44,7 +44,7 @@ This stores credentials at `~/.config/gcloud/application_default_credentials.jso
 ### 2. Create a profiles file
 
 ```bash
-tts-mcp init
+tts-mcp --init
 ```
 
 This creates a starter config at `~/.config/tts-mcp/profiles.json` with example profiles for every Google TTS voice tier. Edit it to pick your voice, format, and playback settings.

@@ -45,7 +45,7 @@ def test_resolve_local_fallback(tmp_path, monkeypatch):
 def test_resolve_nothing_found(tmp_path, monkeypatch):
     monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
     monkeypatch.chdir(tmp_path)
-    with pytest.raises(ValueError, match="tts-mcp init"):
+    with pytest.raises(ValueError, match="tts-mcp --init"):
         resolve_profile_path(None)
 
 
@@ -53,7 +53,7 @@ def test_resolve_empty_string_treated_as_none(tmp_path, monkeypatch):
     """Empty string (from env var default) should trigger auto-discovery, not explicit lookup."""
     monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
     monkeypatch.chdir(tmp_path)
-    with pytest.raises(ValueError, match="tts-mcp init"):
+    with pytest.raises(ValueError, match="tts-mcp --init"):
         resolve_profile_path("")
 
 
