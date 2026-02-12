@@ -15,6 +15,7 @@ help:
 
 setup:
 	@test -d "$(VENV)" || $(PYTHON) -m venv "$(VENV)"
+	@$(PIP) install --quiet --upgrade pip
 	@$(PIP) install --quiet -e ".[dev]"
 	@git config core.hooksPath .githooks
 
