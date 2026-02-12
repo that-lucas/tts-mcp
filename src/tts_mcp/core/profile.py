@@ -39,7 +39,7 @@ def default_config_dir() -> Path:
     Honors XDG_CONFIG_HOME if set, otherwise defaults to ~/.config.
     """
     xdg_config = os.environ.get("XDG_CONFIG_HOME", "")
-    base = Path(xdg_config) if xdg_config else Path("~/.config").expanduser()
+    base = Path(xdg_config).expanduser() if xdg_config else Path("~/.config").expanduser()
     return base / CONFIG_DIR_NAME
 
 

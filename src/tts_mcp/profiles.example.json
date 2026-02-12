@@ -1,5 +1,5 @@
 {
-  "_comment": "Example profiles showing different Google TTS model tiers. Run 'tts-mcp --init' to install, then customize.",
+  "_comment": "Example profiles showing different Google TTS model tiers. Run 'tts-mcp --init' to install, then customize. player_command uses macOS afplay by default — Linux users should change to aplay, mpv, or ffplay.",
   "default_profile": "casual",
   "profiles": {
     "chirp3": {
