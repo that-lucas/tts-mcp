@@ -33,7 +33,7 @@ PROFILE_NAME_ENV = "GTTS_PROFILE"
 
 def _example_profiles_text() -> str:
     """Read the bundled example_profiles.json from the package."""
-    ref = importlib.resources.files("tts_mcp").joinpath("example_profiles.json")
+    ref = importlib.resources.files("tts_mcp").joinpath("profiles.example.json")
     return ref.read_text(encoding="utf-8")
 
 

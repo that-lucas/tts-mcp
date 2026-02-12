@@ -134,7 +134,7 @@ tts-mcp --doctor --profile opencode
 
 ## Profile system
 
-Profiles are defined in a JSON file (see [`tts_profiles.example.json`](tts_profiles.example.json)):
+Profiles are defined in a JSON file (see [`profiles.example.json`](src/tts_mcp/profiles.example.json)):
 
 ```json
 {
