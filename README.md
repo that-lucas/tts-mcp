@@ -52,18 +52,18 @@ This creates a starter config at `~/.config/tts-mcp/profiles.json` with example 
 The server finds the profiles file automatically — no `--profiles` flag needed for the common case. The search order is:
 
 1. `--profiles` flag or `GTTS_PROFILES` env var (explicit override)
-2. `~/.config/tts-mcp/profiles.json` (XDG standard — created by `tts-mcp init`)
+2. `~/.config/tts-mcp/profiles.json` (XDG standard — created by `tts-mcp --init`)
 3. `./tts_profiles.json` (local dev fallback)
 
 ## MCP client setup
 
-After running `tts-mcp init`, no `--profiles` flag is needed — the server finds `~/.config/tts-mcp/profiles.json` automatically. Just pass `--profile` to select which profile each client uses.
+After running `tts-mcp --init`, no `--profiles` flag is needed — the server finds `~/.config/tts-mcp/profiles.json` automatically. Just pass `--profile` to select which profile each client uses.
 
 ### Claude Code
 
 ```bash
 claude mcp add --transport stdio --scope user \
-  speech -- tts-mcp --profile claude_code
+  speech -- tts-mcp --profile claude
 ```
 
 ### OpenCode
@@ -113,23 +113,45 @@ In any MCP-enabled client, prompt naturally:
 
 Tool names may appear prefixed by the client (e.g. `speech_tts_speak`, `speech_tts_stop`).
 
-## CLI tools
+## CLI reference
 
-The package also installs standalone CLI commands:
+The package installs four commands. Each supports `--help` for full details.
 
-| Command          | Description                              |
-| ---------------- | ---------------------------------------- |
-| `tts-mcp`        | Start the MCP server                     |
-| `tts-mcp --init` | Create starter config at `~/.config/tts-mcp/` |
-| `tts-speak`      | Synthesize text to audio from the CLI    |
-| `tts-voices`     | List available Google TTS voices         |
-| `tts-batch`      | Generate samples for multiple voices     |
+### `tts-mcp` — MCP server and management
 
 ```bash
-tts-mcp --init
+tts-mcp --init              # create starter config at ~/.config/tts-mcp/profiles.json
+tts-mcp --init --force      # overwrite existing config
+tts-mcp --doctor            # diagnostics: auth, profile, voice, player
+tts-mcp --profile casual    # start MCP server with a specific profile
+```
+
+### `tts-speak` — synthesize text to audio
+
+```bash
 tts-speak --text "Hello world" --voice en-US-Chirp3-HD-Fenrir --format wav --out hello.wav
-tts-voices --language en-US --family Chirp3
-tts-mcp --doctor --profile opencode
+tts-speak --text-file notes.txt --voice en-US-Neural2-D --format mp3 --out notes.mp3
+tts-speak --ssml --text "<speak>Hello <break time='500ms'/> world</speak>" --out ssml.wav
+echo "Piped text" | tts-speak --voice en-US-Casual-K --out piped.ogg
+```
+
+Options: `--voice`, `--language`, `--model`, `--format` (mp3/ogg/wav), `--speaking-rate`, `--pitch`, `--out`, `--usage-log`.
+
+### `tts-voices` — list available voices
+
+```bash
+tts-voices                              # list all voices
+tts-voices --language en-US             # filter by language
+tts-voices --language en-US --family Chirp3   # filter by family
+tts-voices --limit 5                    # limit results
+```
+
+### `tts-batch` — generate samples for multiple voices
+
+```bash
+tts-batch --text-file test.txt --out-dir ./samples
+tts-batch --text-file test.txt --families Chirp3,Neural2 --language en-US --format wav
+tts-batch --text-file test.txt --limit 3   # first 3 matching voices only
 ```
 
 ## Profile system
@@ -147,8 +169,8 @@ Profiles are defined in a JSON file (see [`profiles.example.json`](src/tts_mcp/p
       "format": "wav",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": ["afplay", "{file}"]
     }
@@ -170,10 +192,9 @@ Each profile locks: `voice`, `language`, `model`, `format`, `output_dir`, `usage
 ```bash
 git clone git@github.com:that-lucas/tts-mcp.git
 cd tts-mcp
-make setup
-pip install -e ".[dev]"
-pytest
-ruff check .
+make setup    # creates venv, installs package + dev deps, sets git hooks
+make test     # run pytest
+make lint     # run ruff check + format check
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
