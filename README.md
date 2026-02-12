@@ -135,7 +135,7 @@ tts-speak --ssml --text "<speak>Hello <break time='500ms'/> world</speak>" --out
 echo "Piped text" | tts-speak --voice en-US-Casual-K --out piped.ogg
 ```
 
-Options: `--voice`, `--language`, `--model`, `--format` (mp3/ogg/wav), `--speaking-rate`, `--pitch`, `--out`, `--usage-log`.
+Options: `--text`, `--text-file`, `--voice`, `--language`, `--model`, `--format` (mp3/ogg/wav), `--speaking-rate`, `--pitch`, `--out`, `--usage-log`.
 
 ### `tts-voices` — list available voices
 
