@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.resources
 import json
 import os
 import shutil
@@ -13,21 +14,51 @@ from typing import Any
 from fastmcp import FastMCP
 from fastmcp.utilities.logging import configure_logging
 
-from tts_core.auth import create_tts_client
-from tts_core.profile import TTSProfile, load_profile, play_audio, stop_audio
-from tts_core.synth import SynthesisRequest, read_text_input, synthesize_to_file, timestamped_output_path
-from tts_core.usage import append_usage_row, create_usage_snapshot
-from tts_core.voices import list_voices
+from tts_mcp.core.auth import create_tts_client
+from tts_mcp.core.profile import (
+    TTSProfile,
+    default_config_dir,
+    load_profile,
+    play_audio,
+    resolve_profile_path,
+    stop_audio,
+)
+from tts_mcp.core.synth import SynthesisRequest, read_text_input, synthesize_to_file, timestamped_output_path
+from tts_mcp.core.usage import append_usage_row, create_usage_snapshot
+from tts_mcp.core.voices import list_voices
 
 PROFILES_ENV = "GTTS_PROFILES"
 PROFILE_NAME_ENV = "GTTS_PROFILE"
+
+
+def _example_profiles_text() -> str:
+    """Read the bundled profiles.example.json from the package."""
+    ref = importlib.resources.files("tts_mcp").joinpath("profiles.example.json")
+    return ref.read_text(encoding="utf-8")
+
+
+def init_config(force: bool = False) -> Path:
+    """Create a starter profiles.json at ~/.config/tts-mcp/profiles.json.
+
+    Returns the path to the created file.
+    Raises FileExistsError if the file already exists and force is False.
+    """
+    config_dir = default_config_dir()
+    dest = config_dir / "profiles.json"
+
+    if dest.exists() and not force:
+        raise FileExistsError(f"Config already exists: {dest}\nUse --force to overwrite.")
+
+    config_dir.mkdir(parents=True, exist_ok=True)
+    dest.write_text(_example_profiles_text(), encoding="utf-8")
+    return dest
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Google TTS MCP server")
     parser.add_argument(
         "--profiles",
-        default=os.getenv(PROFILES_ENV, "./tts_profiles.json"),
+        default=os.getenv(PROFILES_ENV, ""),
         help="Path to TTS profile JSON file.",
     )
     parser.add_argument(
@@ -40,11 +71,22 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Print diagnostics JSON and exit without starting MCP server.",
     )
+    parser.add_argument(
+        "--init",
+        action="store_true",
+        help="Create a starter profiles.json at ~/.config/tts-mcp/ and exit.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing profiles.json when using --init.",
+    )
     return parser.parse_args()
 
 
 def load_runtime(profile_file: str, profile_name: str) -> tuple[TTSProfile, Any]:
-    profile = load_profile(Path(profile_file), profile_name)
+    path = resolve_profile_path(profile_file or None)
+    profile = load_profile(path, profile_name)
     client = create_tts_client()
     return profile, client
 
@@ -63,9 +105,14 @@ def doctor_report(profile_file: str, profile_name: str) -> dict[str, Any]:
         credentials_path = ""
         credentials_source = "not_found"
 
+    try:
+        resolved_file = str(resolve_profile_path(profile_file or None))
+    except ValueError:
+        resolved_file = profile_file or "<not found>"
+
     report: dict[str, Any] = {
         "ok": True,
-        "profile_file": str(Path(profile_file).expanduser().resolve()),
+        "profile_file": resolved_file,
         "profile_name": profile_name or "<default>",
         "credentials_path": credentials_path,
         "credentials_source": credentials_source,
@@ -251,6 +298,17 @@ def create_server(profile_file: str, profile_name: str) -> FastMCP:
 def main() -> None:
     configure_logging(level="ERROR")
     args = parse_args()
+
+    if args.init:
+        try:
+            dest = init_config(force=args.force)
+            print(f"Created {dest}")
+            print("Edit this file to customize your voice profiles, then restart your MCP client.")
+        except FileExistsError as exc:
+            print(str(exc))
+            raise SystemExit(1) from None
+        return
+
     if args.doctor:
         print(json.dumps(doctor_report(args.profiles, args.profile), indent=2))
         return

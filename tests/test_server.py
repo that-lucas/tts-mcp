@@ -2,15 +2,46 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-from mcp_server import create_server, doctor_report
+import pytest
+
+from tts_mcp.server import create_server, doctor_report, init_config
+
+# -- init_config --
+
+
+def test_init_config_creates_file(tmp_path, monkeypatch):
+    monkeypatch.setattr("tts_mcp.server.default_config_dir", lambda: tmp_path / "tts-mcp")
+    dest = init_config()
+    assert dest.exists()
+    assert "profiles" in dest.read_text()
+
+
+def test_init_config_refuses_overwrite(tmp_path, monkeypatch):
+    config_dir = tmp_path / "tts-mcp"
+    config_dir.mkdir()
+    (config_dir / "profiles.json").write_text("{}")
+    monkeypatch.setattr("tts_mcp.server.default_config_dir", lambda: config_dir)
+    with pytest.raises(FileExistsError, match="already exists"):
+        init_config(force=False)
+
+
+def test_init_config_force_overwrites(tmp_path, monkeypatch):
+    config_dir = tmp_path / "tts-mcp"
+    config_dir.mkdir()
+    (config_dir / "profiles.json").write_text("{}")
+    monkeypatch.setattr("tts_mcp.server.default_config_dir", lambda: config_dir)
+    dest = init_config(force=True)
+    assert dest.exists()
+    assert "profiles" in dest.read_text()
+
 
 # -- doctor_report --
 
 
-@patch("mcp_server.load_runtime")
-@patch("mcp_server.list_voices")
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.list_voices")
 def test_doctor_report_success(mock_voices, mock_lr, sample_profile_file):
-    from tts_core.profile import load_profile
+    from tts_mcp.core.profile import load_profile
 
     profile = load_profile(sample_profile_file, "test")
     client = MagicMock()
@@ -27,17 +58,17 @@ def test_doctor_report_success(mock_voices, mock_lr, sample_profile_file):
     assert report["voice_available"] is True
 
 
-@patch("mcp_server.load_runtime", side_effect=RuntimeError("boom"))
+@patch("tts_mcp.server.load_runtime", side_effect=RuntimeError("boom"))
 def test_doctor_report_load_failure(mock_lr, sample_profile_file):
     report = doctor_report(str(sample_profile_file), "test")
     assert report["ok"] is False
     assert "boom" in report["error"]
 
 
-@patch("mcp_server.load_runtime")
-@patch("mcp_server.list_voices")
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.list_voices")
 def test_doctor_report_no_credentials(mock_voices, mock_lr, sample_profile_file, monkeypatch, tmp_path):
-    from tts_core.profile import load_profile
+    from tts_mcp.core.profile import load_profile
 
     monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
     # Point HOME to an empty temp dir so the gcloud ADC well-known path doesn't exist
@@ -52,10 +83,10 @@ def test_doctor_report_no_credentials(mock_voices, mock_lr, sample_profile_file,
     assert any("gcloud" in n for n in report["notes"])
 
 
-@patch("mcp_server.load_runtime")
-@patch("mcp_server.list_voices")
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.list_voices")
 def test_doctor_report_voice_not_available(mock_voices, mock_lr, sample_profile_file):
-    from tts_core.profile import load_profile
+    from tts_mcp.core.profile import load_profile
 
     profile = load_profile(sample_profile_file, "test")
     mock_lr.return_value = (profile, MagicMock())
@@ -72,11 +103,11 @@ def test_doctor_report_voice_not_available(mock_voices, mock_lr, sample_profile_
 # -- create_server --
 
 
-@patch("mcp_server.load_runtime")
+@patch("tts_mcp.server.load_runtime")
 def test_create_server_returns_fastmcp(mock_lr, sample_profile_file):
     from fastmcp import FastMCP
 
-    from tts_core.profile import load_profile
+    from tts_mcp.core.profile import load_profile
 
     profile = load_profile(sample_profile_file, "test")
     mock_lr.return_value = (profile, MagicMock())
@@ -88,12 +119,12 @@ def test_create_server_returns_fastmcp(mock_lr, sample_profile_file):
 # -- tool functions (via closure extraction) --
 
 
-@patch("mcp_server.load_runtime")
-@patch("mcp_server.synthesize_to_file")
-@patch("mcp_server.play_audio", return_value=False)
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.synthesize_to_file")
+@patch("tts_mcp.server.play_audio", return_value=False)
 def test_tts_speak_tool_success(mock_play, mock_synth, mock_lr, sample_profile_file, tmp_path):
-    from tts_core.profile import load_profile
-    from tts_core.synth import SynthesisResult
+    from tts_mcp.core.profile import load_profile
+    from tts_mcp.core.synth import SynthesisResult
 
     profile = load_profile(sample_profile_file, "test")
     mock_lr.return_value = (profile, MagicMock())
@@ -118,10 +149,10 @@ def test_tts_speak_tool_success(mock_play, mock_synth, mock_lr, sample_profile_f
     assert result["chars"] == 5
 
 
-@patch("mcp_server.load_runtime")
-@patch("mcp_server.read_text_input", side_effect=ValueError("bad input"))
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.read_text_input", side_effect=ValueError("bad input"))
 def test_tts_speak_tool_error(mock_read, mock_lr, sample_profile_file):
-    from tts_core.profile import load_profile
+    from tts_mcp.core.profile import load_profile
 
     profile = load_profile(sample_profile_file, "test")
     mock_lr.return_value = (profile, MagicMock())
@@ -133,10 +164,10 @@ def test_tts_speak_tool_error(mock_read, mock_lr, sample_profile_file):
     assert "bad input" in result["error"]
 
 
-@patch("mcp_server.load_runtime")
-@patch("mcp_server.stop_audio")
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.stop_audio")
 def test_tts_stop_tool(mock_stop, mock_lr, sample_profile_file):
-    from tts_core.profile import StopAudioResult, load_profile
+    from tts_mcp.core.profile import StopAudioResult, load_profile
 
     profile = load_profile(sample_profile_file, "test")
     mock_lr.return_value = (profile, MagicMock())

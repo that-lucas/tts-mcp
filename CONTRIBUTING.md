@@ -13,14 +13,13 @@ Thanks for your interest in contributing to tts-mcp.
 ```bash
 git clone git@github.com:that-lucas/tts-mcp.git
 cd tts-mcp
-make setup
-pip install -e ".[dev]"
+make setup    # creates venv, installs package + dev deps, sets git hooks
 ```
 
 ## Running tests
 
 ```bash
-pytest
+make test
 ```
 
 All Google API calls are mocked. No credentials are needed to run the test suite.
@@ -28,8 +27,7 @@ All Google API calls are mocked. No credentials are needed to run the test suite
 ## Linting
 
 ```bash
-ruff check .
-ruff format --check .
+make lint
 ```
 
 To auto-fix issues:

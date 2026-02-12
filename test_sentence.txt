@@ -1,12 +1,5 @@
-Your M4 MacBook Pro (32 GB RAM) is more than enough for Kokoro local.
+I found the issue. The build is failing because src/tts_mcp/server.py imports from tts_mcp.core.profile, but the __init__.py in core is missing the TTSProfile re-export. The traceback points to line 17: "ImportError: cannot import name TTSProfile from tts_mcp.core.profile." This started after the v0.1.1 tag was pushed — the CI on the release workflow catches it, but the pre-commit hook doesn't run pytest, so it slipped through locally.
 
-Recommended plan: start with Kokoro ONNX (lowest infrastructure impact), then optionally test full PyTorch Kokoro.
+Here's what I'd suggest. First, check your pyproject.toml — the [tool.hatch.build.targets.wheel] section should list packages = ["src/tts_mcp"], not the old packages = ["tts_core"]. Second, the .github/workflows/ci.yml matrix runs Python 3.11, 3.12, and 3.13, but the 3.11 runner is the one failing because of a typing_extensions backport issue. You can pin typing-extensions>=4.9.0 in your dependencies to fix it across all versions.
 
-1. Choose runtime
-
-- Primary (recommended): kokoro-onnx
-  - Officially claims near-real-time on M1 and lightweight model sizes.
-  - Best for always-on CLI narration with minimal load.
-- Secondary: kokoro (PyTorch)
-  - More "native" pipeline, but heavier runtime.
-  - On Apple Silicon, project docs suggest PYTORCH_ENABLE_MPS_FALLBACK=1.
+After applying those changes, run pip install -e ".[dev]" && pytest --cov=tts_mcp --cov-report=term-missing to verify. The coverage report should show 68 tests passing with at least 80% on the tts_mcp.core modules. If the doctor check still fails, make sure your gcloud ADC credentials at ~/.config/gcloud/application_default_credentials.json haven't expired — you can refresh them with gcloud auth application-default login.

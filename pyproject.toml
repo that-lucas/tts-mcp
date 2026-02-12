@@ -33,10 +33,10 @@ Repository = "https://github.com/that-lucas/tts-mcp"
 Issues = "https://github.com/that-lucas/tts-mcp/issues"
 
 [project.scripts]
-tts-mcp   = "mcp_server:main"
-tts-speak  = "speak:main"
-tts-voices = "list_voices:main"
-tts-batch  = "batch_generate_us:main"
+tts-mcp    = "tts_mcp.server:main"
+tts-speak  = "tts_mcp.speak:main"
+tts-voices = "tts_mcp.list_voices:main"
+tts-batch  = "tts_mcp.batch:main"
 
 
 [project.optional-dependencies]
@@ -47,13 +47,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["tts_core"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"mcp_server.py" = "mcp_server.py"
-"speak.py" = "speak.py"
-"list_voices.py" = "list_voices.py"
-"batch_generate_us.py" = "batch_generate_us.py"
+packages = ["src/tts_mcp"]
 
 
 # -- Ruff --
@@ -101,7 +95,12 @@ addopts = ["--strict-markers", "--tb=short", "-q"]
 # -- Coverage --
 
 [tool.coverage.run]
-source = ["tts_core", "mcp_server"]
+source = ["tts_mcp"]
+omit = [
+    "src/tts_mcp/speak.py",
+    "src/tts_mcp/list_voices.py",
+    "src/tts_mcp/batch.py",
+]
 
 [tool.coverage.report]
 fail_under = 80

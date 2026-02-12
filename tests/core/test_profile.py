@@ -6,7 +6,56 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tts_core.profile import TTSProfile, load_profile, play_audio, stop_audio
+from tts_mcp.core.profile import TTSProfile, load_profile, play_audio, resolve_profile_path, stop_audio
+
+# -- resolve_profile_path --
+
+
+def test_resolve_explicit_path(sample_profile_file):
+    result = resolve_profile_path(str(sample_profile_file))
+    assert result == sample_profile_file
+
+
+def test_resolve_explicit_path_not_found(tmp_path):
+    with pytest.raises(ValueError, match="not found"):
+        resolve_profile_path(str(tmp_path / "nope.json"))
+
+
+def test_resolve_xdg_path(tmp_path, monkeypatch):
+    config_dir = tmp_path / ".config" / "tts-mcp"
+    config_dir.mkdir(parents=True)
+    profiles = config_dir / "profiles.json"
+    profiles.write_text('{"profiles": {}}')
+    monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: config_dir)
+    result = resolve_profile_path(None)
+    assert result == profiles
+
+
+def test_resolve_local_fallback(tmp_path, monkeypatch):
+    # No XDG path
+    monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
+    # Create local file in cwd
+    local = tmp_path / "tts_profiles.json"
+    local.write_text('{"profiles": {}}')
+    monkeypatch.chdir(tmp_path)
+    result = resolve_profile_path(None)
+    assert result == local.resolve()
+
+
+def test_resolve_nothing_found(tmp_path, monkeypatch):
+    monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(ValueError, match="tts-mcp --init"):
+        resolve_profile_path(None)
+
+
+def test_resolve_empty_string_treated_as_none(tmp_path, monkeypatch):
+    """Empty string (from env var default) should trigger auto-discovery, not explicit lookup."""
+    monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(ValueError, match="tts-mcp --init"):
+        resolve_profile_path("")
+
 
 # -- load_profile --
 
@@ -102,8 +151,8 @@ def test_play_audio_autoplay_off():
     assert play_audio(profile, Path("/tmp/test.mp3")) is False
 
 
-@patch("tts_core.profile.subprocess.Popen")
-@patch("tts_core.profile.shutil.which", return_value="/usr/bin/afplay")
+@patch("tts_mcp.core.profile.subprocess.Popen")
+@patch("tts_mcp.core.profile.shutil.which", return_value="/usr/bin/afplay")
 def test_play_audio_success(mock_which, mock_popen):
     profile = _make_profile()
     result = play_audio(profile, Path("/tmp/test.mp3"))
@@ -113,7 +162,7 @@ def test_play_audio_success(mock_which, mock_popen):
     assert cmd == ["afplay", "/tmp/test.mp3"]
 
 
-@patch("tts_core.profile.shutil.which", return_value=None)
+@patch("tts_mcp.core.profile.shutil.which", return_value=None)
 def test_play_audio_player_not_found(mock_which):
     profile = _make_profile()
     with pytest.raises(RuntimeError, match="not found"):
@@ -134,8 +183,8 @@ def test_stop_audio_no_player():
     assert result.attempted is False
 
 
-@patch("tts_core.profile.shutil.which")
-@patch("tts_core.profile.subprocess.run")
+@patch("tts_mcp.core.profile.shutil.which")
+@patch("tts_mcp.core.profile.subprocess.run")
 def test_stop_audio_no_running(mock_run, mock_which):
     mock_which.side_effect = lambda x: f"/usr/bin/{x}"
     lookup = MagicMock()
@@ -148,8 +197,8 @@ def test_stop_audio_no_running(mock_run, mock_which):
     assert result.stopped_processes == 0
 
 
-@patch("tts_core.profile.shutil.which")
-@patch("tts_core.profile.subprocess.run")
+@patch("tts_mcp.core.profile.shutil.which")
+@patch("tts_mcp.core.profile.subprocess.run")
 def test_stop_audio_kills_processes(mock_run, mock_which):
     mock_which.side_effect = lambda x: f"/usr/bin/{x}"
 
@@ -167,7 +216,7 @@ def test_stop_audio_kills_processes(mock_run, mock_which):
     assert result.stopped_processes == 2
 
 
-@patch("tts_core.profile.shutil.which", return_value=None)
+@patch("tts_mcp.core.profile.shutil.which", return_value=None)
 def test_stop_audio_missing_tools(mock_which):
     profile = _make_profile()
     with pytest.raises(RuntimeError, match="missing"):

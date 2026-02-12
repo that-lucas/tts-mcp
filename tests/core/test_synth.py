@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from tts_core.synth import (
+from tts_mcp.core.synth import (
     SynthesisRequest,
     read_text_input,
     sanitize_filename,

@@ -1,5 +1,5 @@
 {
-  "_comment": "Example profiles showing different Google TTS model tiers. Copy this file to tts_profiles.json and customize.",
+  "_comment": "Example profiles showing different Google TTS model tiers. Run 'tts-mcp --init' to install, then customize. player_command uses macOS afplay by default — Linux users should change to aplay, mpv, or ffplay.",
   "default_profile": "casual",
   "profiles": {
     "chirp3": {
@@ -10,8 +10,8 @@
       "format": "wav",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -26,8 +26,8 @@
       "format": "wav",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -42,8 +42,8 @@
       "format": "wav",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -58,8 +58,8 @@
       "format": "ogg",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -74,8 +74,8 @@
       "format": "ogg",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -90,8 +90,8 @@
       "format": "ogg",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -106,8 +106,8 @@
       "format": "ogg",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -122,8 +122,8 @@
       "format": "mp3",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
@@ -138,8 +138,8 @@
       "format": "mp3",
       "speaking_rate": 1.0,
       "pitch": 0.0,
-      "output_dir": "./out",
-      "usage_log": "./usage_log.csv",
+      "output_dir": "~/.local/share/tts-mcp/out",
+      "usage_log": "~/.local/share/tts-mcp/usage_log.csv",
       "autoplay": true,
       "player_command": [
         "afplay",
