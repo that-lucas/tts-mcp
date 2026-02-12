@@ -6,6 +6,9 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+CONFIG_DIR_NAME = "tts-mcp"
+PROFILES_FILENAME = "profiles.json"
+
 
 @dataclass
 class TTSProfile:
@@ -27,6 +30,41 @@ class StopAudioResult:
     attempted: bool
     player: str
     stopped_processes: int
+
+
+def default_config_dir() -> Path:
+    """Return the XDG-compliant config directory: ~/.config/tts-mcp."""
+    return Path("~/.config").expanduser() / CONFIG_DIR_NAME
+
+
+def resolve_profile_path(explicit: str | None = None) -> Path:
+    """Find the profiles file, searching in priority order.
+
+    1. Explicit path (--profiles flag or GTTS_PROFILES env var)
+    2. ~/.config/tts-mcp/profiles.json  (XDG standard)
+    3. ./tts_profiles.json  (legacy / local dev)
+
+    Raises ValueError with a helpful message if nothing is found.
+    """
+    if explicit:
+        path = Path(explicit).expanduser().resolve()
+        if path.exists():
+            return path
+        raise ValueError(f"Profile file not found: {path}")
+
+    xdg_path = default_config_dir() / PROFILES_FILENAME
+    if xdg_path.exists():
+        return xdg_path
+
+    local_path = Path("./tts_profiles.json").resolve()
+    if local_path.exists():
+        return local_path
+
+    raise ValueError(
+        "No profiles file found.\n"
+        "Run 'tts-mcp init' to create one at ~/.config/tts-mcp/profiles.json\n"
+        "or specify a path with --profiles or the GTTS_PROFILES env var."
+    )
 
 
 def _resolve_path(base_dir: Path, value: str) -> Path:

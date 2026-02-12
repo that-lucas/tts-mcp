@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from tts_core.auth import create_tts_client
-from tts_core.voices import list_voices
+from tts_mcp.core.auth import create_tts_client
+from tts_mcp.core.voices import list_voices
 
 
 def parse_args() -> argparse.Namespace:

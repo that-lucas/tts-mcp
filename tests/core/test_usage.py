@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from datetime import UTC, datetime
 
-from tts_core.usage import (
+from tts_mcp.core.usage import (
     append_usage_row,
     create_usage_snapshot,
     detect_family,

@@ -43,22 +43,27 @@ This stores credentials at `~/.config/gcloud/application_default_credentials.jso
 
 ### 2. Create a profiles file
 
-Copy the example and customize:
-
 ```bash
-cp tts_profiles.example.json tts_profiles.json
+tts-mcp init
 ```
 
-Each profile fixes voice, language, model, format, output directory, and playback settings. See [`tts_profiles.example.json`](tts_profiles.example.json) for the full schema.
+This creates a starter config at `~/.config/tts-mcp/profiles.json` with example profiles for every Google TTS voice tier. Edit it to pick your voice, format, and playback settings.
+
+The server finds the profiles file automatically — no `--profiles` flag needed for the common case. The search order is:
+
+1. `--profiles` flag or `GTTS_PROFILES` env var (explicit override)
+2. `~/.config/tts-mcp/profiles.json` (XDG standard — created by `tts-mcp init`)
+3. `./tts_profiles.json` (local dev fallback)
 
 ## MCP client setup
+
+After running `tts-mcp init`, no `--profiles` flag is needed — the server finds `~/.config/tts-mcp/profiles.json` automatically. Just pass `--profile` to select which profile each client uses.
 
 ### Claude Code
 
 ```bash
 claude mcp add --transport stdio --scope user \
-  speech -- \
-  tts-mcp --profiles /path/to/tts_profiles.json --profile claude_code
+  speech -- tts-mcp --profile claude_code
 ```
 
 ### OpenCode
@@ -70,11 +75,7 @@ Edit `~/.config/opencode/opencode.jsonc`:
   "mcp": {
     "speech": {
       "type": "local",
-      "command": [
-        "tts-mcp",
-        "--profiles", "/path/to/tts_profiles.json",
-        "--profile", "opencode"
-      ],
+      "command": ["tts-mcp", "--profile", "opencode"],
       "enabled": true,
       "timeout": 120000
     }
@@ -89,10 +90,7 @@ Edit `~/.codex/config.toml`:
 ```toml
 [mcp_servers.speech]
 command = "tts-mcp"
-args = [
-  "--profiles", "/path/to/tts_profiles.json",
-  "--profile", "codex"
-]
+args = ["--profile", "codex"]
 ```
 
 ### Using uvx (no global install)
@@ -102,7 +100,7 @@ Any client config can use `uvx` instead of installing globally:
 ```json
 {
   "command": "uvx",
-  "args": ["tts-mcp", "--profiles", "/path/to/tts_profiles.json", "--profile", "opencode"]
+  "args": ["tts-mcp", "--profile", "opencode"]
 }
 ```
 
@@ -119,17 +117,19 @@ Tool names may appear prefixed by the client (e.g. `speech_tts_speak`, `speech_t
 
 The package also installs standalone CLI commands:
 
-| Command      | Description                              |
-| ------------ | ---------------------------------------- |
-| `tts-mcp`    | Start the MCP server                     |
-| `tts-speak`  | Synthesize text to audio from the CLI    |
-| `tts-voices` | List available Google TTS voices         |
-| `tts-batch`  | Generate samples for multiple voices     |
+| Command          | Description                              |
+| ---------------- | ---------------------------------------- |
+| `tts-mcp`        | Start the MCP server                     |
+| `tts-mcp --init` | Create starter config at `~/.config/tts-mcp/` |
+| `tts-speak`      | Synthesize text to audio from the CLI    |
+| `tts-voices`     | List available Google TTS voices         |
+| `tts-batch`      | Generate samples for multiple voices     |
 
 ```bash
+tts-mcp --init
 tts-speak --text "Hello world" --voice en-US-Chirp3-HD-Fenrir --format wav --out hello.wav
 tts-voices --language en-US --family Chirp3
-tts-mcp --doctor --profiles tts_profiles.json --profile opencode
+tts-mcp --doctor --profile opencode
 ```
 
 ## Profile system
@@ -163,7 +163,7 @@ Each profile locks: `voice`, `language`, `model`, `format`, `output_dir`, `usage
 - **Auth errors** — run `gcloud auth application-default login`, or confirm `GOOGLE_APPLICATION_CREDENTIALS` is set.
 - **No audio** — verify the player binary (e.g. `afplay`) exists, or change `player_command` in your profile.
 - **Tool timeout** — playback is non-blocking, but if timeouts persist, increase the client's `tool_timeout`.
-- **Run diagnostics** — `tts-mcp --doctor --profiles tts_profiles.json` checks auth, profile, voice, and player.
+- **Run diagnostics** — `tts-mcp --doctor` checks auth, profile, voice, and player.
 
 ## Development
 

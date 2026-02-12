@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from tts_core.auth import create_tts_client
-from tts_core.synth import SynthesisRequest, read_text_input, sanitize_filename, synthesize_to_file
-from tts_core.voices import list_voices
+from tts_mcp.core.auth import create_tts_client
+from tts_mcp.core.synth import SynthesisRequest, read_text_input, sanitize_filename, synthesize_to_file
+from tts_mcp.core.voices import list_voices
 
 AUDIO_FORMATS = ["mp3", "wav", "ogg"]
 

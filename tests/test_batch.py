@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from batch_generate_us import model_tag_and_name
+from tts_mcp.batch import model_tag_and_name
 
 
 def test_model_tag_chirp3():

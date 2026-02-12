@@ -41,7 +41,7 @@ help:
 
 setup:
 	@test -d "$(VENV)" || $(PYTHON) -m venv "$(VENV)"
-	@$(PIP) install --quiet -r requirements.txt
+	@$(PIP) install --quiet -e .
 	@git config core.hooksPath .githooks
 
 speak: setup
@@ -50,7 +50,7 @@ speak: setup
 		echo "Example: make speak TEXT=\"Hello from speech\""; \
 		exit 1; \
 	fi
-	@$(RUN) speak.py \
+	@$(RUN) -m tts_mcp.speak \
 		--text "$(TEXT)" \
 		--voice "$(VOICE)" \
 		--language "$(LANGUAGE)" \
@@ -67,7 +67,7 @@ speak-ssml: setup
 		echo "Example: make speak-ssml TEXT=\"<speak>Hello <break time='500ms'/> world</speak>\""; \
 		exit 1; \
 	fi
-	@$(RUN) speak.py \
+	@$(RUN) -m tts_mcp.speak \
 		--ssml \
 		--text "$(TEXT)" \
 		--voice "$(VOICE)" \
@@ -80,7 +80,7 @@ speak-ssml: setup
 		--out "$(OUT)"
 
 speak-test:
-	@$(RUN) speak.py \
+	@$(RUN) -m tts_mcp.speak \
 		--text-file "$(TEST_TEXT_FILE)" \
 		--voice "$(VOICE)" \
 		--language "$(LANGUAGE)" \
@@ -92,7 +92,7 @@ speak-test:
 		--out "$(TEST_OUT)"
 
 speak-us-all: setup
-	@$(RUN) batch_generate_us.py \
+	@$(RUN) -m tts_mcp.batch \
 		--text-file "$(TEST_TEXT_FILE)" \
 		--out-dir "$(OUT_DIR)" \
 		--families "$(VOICE_FAMILIES)" \
@@ -103,7 +103,7 @@ speak-us-all: setup
 		--limit "$(LIMIT)"
 
 voices: setup
-	@$(RUN) list_voices.py \
+	@$(RUN) -m tts_mcp.list_voices \
 		--language "$(VOICES_LANGUAGE)" \
 		--family "$(VOICE_FAMILY)"
 
@@ -116,12 +116,12 @@ doctor: setup
 mcp-setup: setup
 
 mcp-run: mcp-setup
-	@$(RUN) mcp_server.py \
+	@$(RUN) -m tts_mcp.server \
 		--profiles "$(MCP_PROFILES)" \
 		$(if $(MCP_PROFILE),--profile "$(MCP_PROFILE)")
 
 mcp-doctor: mcp-setup
-	@$(RUN) mcp_server.py \
+	@$(RUN) -m tts_mcp.server \
 		--profiles "$(MCP_PROFILES)" \
 		$(if $(MCP_PROFILE),--profile "$(MCP_PROFILE)") \
 		--doctor

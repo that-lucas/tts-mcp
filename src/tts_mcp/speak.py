@@ -6,9 +6,9 @@ import argparse
 from datetime import UTC, datetime
 from pathlib import Path
 
-from tts_core.auth import create_tts_client
-from tts_core.synth import AUDIO_ENCODINGS, SynthesisRequest, read_text_input, synthesize_to_file
-from tts_core.usage import append_usage_row, create_usage_snapshot
+from tts_mcp.core.auth import create_tts_client
+from tts_mcp.core.synth import AUDIO_ENCODINGS, SynthesisRequest, read_text_input, synthesize_to_file
+from tts_mcp.core.usage import append_usage_row, create_usage_snapshot
 
 
 def parse_args() -> argparse.Namespace:

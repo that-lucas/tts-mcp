@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from tts_core.voices import list_voices
+from tts_mcp.core.voices import list_voices
 
 
 def _make_voice(name, codes):
