@@ -11,7 +11,7 @@ from tts_mcp.core.voices import list_voices
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="List Google TTS voices")
     parser.add_argument("--language", default="", help="Optional language filter, for example en-US")
-    parser.add_argument("--family", default="Chirp3", help="Optional voice family filter")
+    parser.add_argument("--family", default="", help="Optional voice family filter")
     parser.add_argument("--limit", type=int, default=0, help="Optional limit")
     return parser.parse_args()
 
