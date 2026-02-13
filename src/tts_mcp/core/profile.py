@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 CONFIG_DIR_NAME = "tts-mcp"
 PROFILES_FILENAME = "profiles.json"
@@ -46,9 +47,8 @@ def default_config_dir() -> Path:
 def resolve_profile_path(explicit: str | None = None) -> Path:
     """Find the profiles file, searching in priority order.
 
-    1. Explicit path (--profiles flag or GTTS_PROFILES env var)
+    1. Explicit path (--profiles flag or TTS_MCP_PROFILES_PATH env var)
     2. ~/.config/tts-mcp/profiles.json  (XDG standard)
-    3. ./tts_profiles.json  (legacy / local dev)
 
     Raises ValueError with a helpful message if nothing is found.
     """
@@ -62,14 +62,10 @@ def resolve_profile_path(explicit: str | None = None) -> Path:
     if xdg_path.exists():
         return xdg_path
 
-    local_path = Path("./tts_profiles.json").resolve()
-    if local_path.exists():
-        return local_path
-
     raise ValueError(
         "No profiles file found.\n"
         "Run 'tts-mcp --init' to create one at ~/.config/tts-mcp/profiles.json\n"
-        "or specify a path with --profiles or the GTTS_PROFILES env var."
+        "or specify a path with --profiles or the TTS_MCP_PROFILES_PATH env var."
     )
 
 
@@ -168,9 +164,7 @@ def stop_audio(profile: TTSProfile) -> StopAudioResult:
     if pkill_cmd is not None:
         stop = subprocess.run([pkill_cmd, "-x", player], check=False)
     else:
-        if killall_cmd is None:
-            raise RuntimeError("Unable to stop playback automatically: missing killall")
-        stop = subprocess.run([killall_cmd, player], check=False)
+        stop = subprocess.run([cast(str, killall_cmd), player], check=False)
 
     if stop.returncode != 0:
         raise RuntimeError(f"Failed to stop active playback for player: {player}")

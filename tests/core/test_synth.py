@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from tts_mcp.core.synth import (
@@ -50,6 +52,27 @@ def test_timestamped_output_path_format(tmp_path):
 def test_timestamped_output_path_mp3(tmp_path):
     result = timestamped_output_path(audio_format="mp3", output_dir=tmp_path)
     assert result.suffix == ".mp3"
+
+
+def test_timestamped_output_path_includes_sanitized_prefix(tmp_path):
+    result = timestamped_output_path(audio_format="wav", output_dir=tmp_path, prefix="opencode tts")
+    assert result.parent == tmp_path
+    assert result.suffix == ".wav"
+    assert re.match(r"^opencode-tts-\d{8}-\d{6}-\d{3}\.wav$", result.name)
+
+
+def test_timestamped_output_path_no_prefix_when_empty(tmp_path):
+    result = timestamped_output_path(audio_format="wav", output_dir=tmp_path, prefix="")
+    assert result.parent == tmp_path
+    assert result.suffix == ".wav"
+    assert re.match(r"^\d{8}-\d{6}-\d{3}\.wav$", result.name)
+
+
+def test_timestamped_output_path_no_prefix_when_whitespace(tmp_path):
+    result = timestamped_output_path(audio_format="wav", output_dir=tmp_path, prefix="   ")
+    assert result.parent == tmp_path
+    assert result.suffix == ".wav"
+    assert re.match(r"^\d{8}-\d{6}-\d{3}\.wav$", result.name)
 
 
 # -- sanitize_filename --
@@ -175,6 +198,48 @@ def test_synthesize_to_file_without_model(mock_tts_client, tmp_path):
     assert not hasattr(voice_params, "model_name") or voice_params.model_name is None or voice_params.model_name == ""
 
 
+def test_synthesize_to_file_whitespace_model_treated_as_empty(mock_tts_client, tmp_path):
+    output = tmp_path / "test.wav"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="en-US-Neural2-D",
+        language="en-US",
+        model="   ",
+        audio_format="wav",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+
+    call_kwargs = mock_tts_client.synthesize_speech.call_args
+    voice_params = call_kwargs.kwargs["request"]["voice"]
+    assert not hasattr(voice_params, "model_name") or voice_params.model_name is None or voice_params.model_name == ""
+    assert result.model == ""
+
+
+def test_synthesize_to_file_strips_whitespace_model(mock_tts_client, tmp_path):
+    output = tmp_path / "test.wav"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="en-US-Neural2-D",
+        language="en-US",
+        model="  models/chirp3-hd  ",
+        audio_format="wav",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+
+    call_kwargs = mock_tts_client.synthesize_speech.call_args
+    voice_params = call_kwargs.kwargs["request"]["voice"]
+    assert voice_params.model_name == "models/chirp3-hd"
+    assert result.model == "models/chirp3-hd"
+
+
 def test_synthesize_to_file_bad_format(mock_tts_client, tmp_path):
     output = tmp_path / "test.aac"
     req = SynthesisRequest(
@@ -207,3 +272,73 @@ def test_synthesize_creates_parent_dirs(mock_tts_client, tmp_path):
     )
     result = synthesize_to_file(mock_tts_client, req)
     assert result.output_file.exists()
+
+
+def test_synthesize_allows_empty_voice_with_language(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="",
+        language="en-US",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+    assert result.voice == ""
+    assert result.language == "en-US"
+
+
+def test_synthesize_allows_voice_without_language(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="en-US-Neural2-D",
+        language="",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+    assert result.voice == "en-US-Neural2-D"
+    assert result.language == ""
+
+
+def test_synthesize_requires_voice_or_language(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="",
+        language="",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    with pytest.raises(ValueError, match="Either voice or language"):
+        synthesize_to_file(mock_tts_client, req)
+
+
+def test_synthesize_requires_voice_or_language_when_whitespace_only(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="  ",
+        language="\t",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    with pytest.raises(ValueError, match="Either voice or language"):
+        synthesize_to_file(mock_tts_client, req)

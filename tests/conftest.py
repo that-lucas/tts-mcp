@@ -41,7 +41,7 @@ def sample_profile_dict(tmp_path):
 
 @pytest.fixture
 def sample_profile_file(tmp_path, sample_profile_dict):
-    """Write a minimal tts_profiles.json and return its Path."""
-    f = tmp_path / "tts_profiles.json"
+    """Write a minimal profiles.json and return its Path."""
+    f = tmp_path / "profiles.json"
     f.write_text(json.dumps(sample_profile_dict))
     return f

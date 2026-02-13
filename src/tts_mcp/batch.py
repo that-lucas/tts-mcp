@@ -13,12 +13,15 @@ AUDIO_FORMATS = ["mp3", "wav", "ogg"]
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate TTS audio for many US voices")
+    parser = argparse.ArgumentParser(
+        description="Generate TTS audio for many US voices",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument("--text-file", required=True, help="UTF-8 text file to synthesize")
     parser.add_argument("--out-dir", default="./out", help="Output directory")
     parser.add_argument(
         "--families",
-        default="Chirp3,Neural2",
+        default="",
         help="Comma-separated family filters (for example Chirp3,Neural2)",
     )
     parser.add_argument("--language", default="en-US", help="Language filter")

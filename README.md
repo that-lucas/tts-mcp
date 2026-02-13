@@ -1,6 +1,6 @@
 # tts-mcp
 
-Profile-driven MCP server for Google Cloud Text-to-Speech.
+Profile-driven MCP server for **Google Cloud Text-to-Speech**: define one profile per app/client so each tool always speaks with the right voice and settings.
 
 Exposes three tools to any MCP client:
 
@@ -26,7 +26,7 @@ uvx tts-mcp --help
 
 - Python 3.11+
 - A [Google Cloud project](https://console.cloud.google.com/freetrial) with the **Cloud Text-to-Speech API** enabled
-  - Google offers a generous free tier — up to **4 million characters/month** for Standard/WaveNet voices and **1 million characters/month** for Neural2, Polyglot, and Chirp3 HD voices, more than enough for most individual use. See [TTS pricing](https://cloud.google.com/text-to-speech/pricing) for details.
+- Google offers a generous free tier — up to **4 million characters/month** for Standard and WaveNet voices, and **1 million characters/month** for Neural2, Polyglot, Chirp 3: HD, and Studio voices, more than enough for most individual use. See [TTS pricing](https://cloud.google.com/text-to-speech/pricing) for details.
 - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`) for authentication
 - macOS uses `afplay` for playback by default (configurable via profile)
 
@@ -51,9 +51,8 @@ This creates a starter config at `~/.config/tts-mcp/profiles.json` with example 
 
 The server finds the profiles file automatically — no `--profiles` flag needed for the common case. The search order is:
 
-1. `--profiles` flag or `GTTS_PROFILES` env var (explicit override)
+1. `--profiles` flag or `TTS_MCP_PROFILES_PATH` env var (explicit override)
 2. `~/.config/tts-mcp/profiles.json` (XDG standard — created by `tts-mcp --init`)
-3. `./tts_profiles.json` (local dev fallback)
 
 ## MCP client setup
 
@@ -126,6 +125,12 @@ tts-mcp --doctor            # diagnostics: auth, profile, voice, player
 tts-mcp --profile casual    # start MCP server with a specific profile
 ```
 
+Defaults:
+
+- `--profiles`: `TTS_MCP_PROFILES_PATH` env var or `""` (then auto-discovery runs)
+- `--profile`: `TTS_MCP_PROFILE_NAME` env var or `""` (then `default_profile` is used)
+- `--doctor`, `--init`, `--force`: `false`
+
 ### `tts-speak` — synthesize text to audio
 
 ```bash
@@ -137,14 +142,32 @@ echo "Piped text" | tts-speak --voice en-US-Casual-K --out piped.ogg
 
 Options: `--text`, `--text-file`, `--voice`, `--language`, `--model`, `--format` (mp3/ogg/wav), `--speaking-rate`, `--pitch`, `--out`, `--usage-log`.
 
+Defaults:
+
+- `--voice`: `""`
+- `--language`: `en-US`
+- `--model`: `""`
+- `--format`: `mp3`
+- `--speaking-rate`: `1.0`
+- `--pitch`: `0.0`
+- `--out`: `""` (auto-generates `YYYYMMDD-HHMMSS-ms.ext` in the current directory, local timezone)
+- `--usage-log`: `usage_log.csv`
+- input: if neither `--text` nor `--text-file` is provided, the CLI reads piped stdin or prompts for text
+
 ### `tts-voices` — list available voices
 
 ```bash
-tts-voices                              # list all voices
+tts-voices                              # list en-US voices (default language)
 tts-voices --language en-US             # filter by language
 tts-voices --language en-US --family Chirp3   # filter by family
 tts-voices --limit 5                    # limit results
 ```
+
+Defaults:
+
+- `--language`: `en-US`
+- `--family`: `""` (no family filter)
+- `--limit`: `0` (no limit)
 
 ### `tts-batch` — generate samples for multiple voices
 
@@ -153,6 +176,17 @@ tts-batch --text-file test.txt --out-dir ./samples
 tts-batch --text-file test.txt --families Chirp3,Neural2 --language en-US --format wav
 tts-batch --text-file test.txt --limit 3   # first 3 matching voices only
 ```
+
+Defaults:
+
+- `--families`: `""` (no family filter)
+- `--language`: `en-US`
+- `--format`: `mp3`
+- `--out-dir`: `./out`
+- `--speaking-rate`: `1.0`
+- `--pitch`: `0.0`
+- `--limit`: `0` (all matching voices)
+- `--text-file`: required
 
 ## Profile system
 

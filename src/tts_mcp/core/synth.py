@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
 from google.cloud import texttospeech
@@ -58,9 +58,11 @@ def read_text_input(*, text: str, text_file: str) -> str:
 
 
 def timestamped_output_path(*, audio_format: str, output_dir: Path, prefix: str = "speech") -> Path:
-    _ = prefix
-    now = datetime.now(UTC)
-    stamp = now.strftime("%Y-%m-%d-%H-%M-%S") + f"-{now.microsecond // 1000:03d}"
+    now = datetime.now().astimezone()
+    stamp = now.strftime("%Y%m%d-%H%M%S") + f"-{now.microsecond // 1000:03d}"
+    if prefix.strip():
+        safe_prefix = sanitize_filename(prefix)
+        return output_dir / f"{safe_prefix}-{stamp}.{audio_format}"
     return output_dir / f"{stamp}.{audio_format}"
 
 
@@ -87,17 +89,19 @@ def synthesize_to_file(
     else:
         synthesis_input = texttospeech.SynthesisInput(text=request.text)
 
-    if request.model:
-        voice = texttospeech.VoiceSelectionParams(
-            language_code=request.language,
-            name=request.voice,
-            model_name=request.model,
-        )
-    else:
-        voice = texttospeech.VoiceSelectionParams(
-            language_code=request.language,
-            name=request.voice,
-        )
+    voice_name = request.voice.strip()
+    language_code = request.language.strip()
+    model_name = request.model.strip()
+    if not voice_name and not language_code:
+        raise ValueError("Either voice or language must be provided.")
+
+    voice = texttospeech.VoiceSelectionParams()
+    if language_code:
+        voice.language_code = language_code
+    if voice_name:
+        voice.name = voice_name
+    if model_name:
+        voice.model_name = model_name
 
     response = client.synthesize_speech(
         request={
@@ -119,8 +123,8 @@ def synthesize_to_file(
         mime_type=MIME_TYPES[request.audio_format],
         bytes_written=len(response.audio_content),
         chars=len(request.text),
-        voice=request.voice,
-        language=request.language,
-        model=request.model,
+        voice=voice_name,
+        language=language_code,
+        model=model_name,
         audio_format=request.audio_format,
     )

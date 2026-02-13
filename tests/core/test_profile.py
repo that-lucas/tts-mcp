@@ -6,7 +6,28 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tts_mcp.core.profile import TTSProfile, load_profile, play_audio, resolve_profile_path, stop_audio
+from tts_mcp.core.profile import (
+    TTSProfile,
+    default_config_dir,
+    load_profile,
+    play_audio,
+    resolve_profile_path,
+    stop_audio,
+)
+
+# -- default_config_dir --
+
+
+def test_default_config_dir_uses_xdg_env(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    assert default_config_dir() == (tmp_path / "xdg" / "tts-mcp")
+
+
+def test_default_config_dir_uses_home_config_when_xdg_missing(monkeypatch):
+    monkeypatch.delenv("XDG_CONFIG_HOME", raising=False)
+    expected = Path("~/.config").expanduser() / "tts-mcp"
+    assert default_config_dir() == expected
+
 
 # -- resolve_profile_path --
 
@@ -29,17 +50,6 @@ def test_resolve_xdg_path(tmp_path, monkeypatch):
     monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: config_dir)
     result = resolve_profile_path(None)
     assert result == profiles
-
-
-def test_resolve_local_fallback(tmp_path, monkeypatch):
-    # No XDG path
-    monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
-    # Create local file in cwd
-    local = tmp_path / "tts_profiles.json"
-    local.write_text('{"profiles": {}}')
-    monkeypatch.chdir(tmp_path)
-    result = resolve_profile_path(None)
-    assert result == local.resolve()
 
 
 def test_resolve_nothing_found(tmp_path, monkeypatch):
@@ -183,6 +193,13 @@ def test_stop_audio_no_player():
     assert result.attempted is False
 
 
+def test_stop_audio_empty_player_name():
+    profile = _make_profile(player_command=[""])
+    result = stop_audio(profile)
+    assert result.attempted is False
+    assert result.player == ""
+
+
 @patch("tts_mcp.core.profile.shutil.which")
 @patch("tts_mcp.core.profile.subprocess.run")
 def test_stop_audio_no_running(mock_run, mock_which):
@@ -220,4 +237,57 @@ def test_stop_audio_kills_processes(mock_run, mock_which):
 def test_stop_audio_missing_tools(mock_which):
     profile = _make_profile()
     with pytest.raises(RuntimeError, match="missing"):
+        stop_audio(profile)
+
+
+@patch("tts_mcp.core.profile.shutil.which")
+@patch("tts_mcp.core.profile.subprocess.run")
+def test_stop_audio_lookup_failure(mock_run, mock_which):
+    mock_which.side_effect = lambda x: f"/usr/bin/{x}"
+    lookup = MagicMock()
+    lookup.returncode = 2
+    lookup.stdout = ""
+    mock_run.return_value = lookup
+
+    profile = _make_profile()
+    with pytest.raises(RuntimeError, match="Failed to inspect"):
+        stop_audio(profile)
+
+
+@patch("tts_mcp.core.profile.shutil.which")
+@patch("tts_mcp.core.profile.subprocess.run")
+def test_stop_audio_falls_back_to_killall(mock_run, mock_which):
+    def _which(name: str) -> str | None:
+        if name == "pkill":
+            return None
+        return f"/usr/bin/{name}"
+
+    mock_which.side_effect = _which
+    lookup = MagicMock()
+    lookup.returncode = 0
+    lookup.stdout = "123\n"
+    killall = MagicMock()
+    killall.returncode = 0
+    mock_run.side_effect = [lookup, killall]
+
+    profile = _make_profile()
+    result = stop_audio(profile)
+    assert result.attempted is True
+    assert result.stopped_processes == 1
+    assert mock_run.call_args_list[1].args[0] == ["/usr/bin/killall", "afplay"]
+
+
+@patch("tts_mcp.core.profile.shutil.which")
+@patch("tts_mcp.core.profile.subprocess.run")
+def test_stop_audio_stop_command_failure(mock_run, mock_which):
+    mock_which.side_effect = lambda x: f"/usr/bin/{x}"
+    lookup = MagicMock()
+    lookup.returncode = 0
+    lookup.stdout = "123\n"
+    stop = MagicMock()
+    stop.returncode = 1
+    mock_run.side_effect = [lookup, stop]
+
+    profile = _make_profile()
+    with pytest.raises(RuntimeError, match="Failed to stop active playback"):
         stop_audio(profile)

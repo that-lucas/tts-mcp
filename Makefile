@@ -5,13 +5,14 @@ VENV ?= .venv
 RUN := $(VENV)/bin/python
 PIP := $(RUN) -m pip
 
-.PHONY: help setup test lint release
+.PHONY: help setup test lint lint-fix release
 
 help:
 	@echo "Targets:"
 	@echo "  make setup   — create venv, install package in editable mode, set git hooks"
 	@echo "  make test    — run pytest"
 	@echo "  make lint    — run ruff check + format check"
+	@echo "  make lint-fix — auto-fix ruff issues + format"
 	@echo "  make release — bump patch version, update pyproject.toml, tag, and push"
 
 setup:
@@ -24,8 +25,12 @@ test: setup
 	@$(RUN) -m pytest
 
 lint: setup
-	@$(RUN) -m ruff check .
+	@$(RUN) -m ruff check --output-format=concise .
 	@$(RUN) -m ruff format --check .
+
+lint-fix: setup
+	@$(RUN) -m ruff check --fix .
+	@$(RUN) -m ruff format .
 
 release:
 	@LAST_TAG=$$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0"); \

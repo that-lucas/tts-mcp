@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import argparse
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tts_mcp.server import create_server, doctor_report, init_config
+from tts_mcp.server import create_server, doctor_report, init_config, load_runtime, main
 
 # -- init_config --
 
@@ -56,6 +58,52 @@ def test_doctor_report_success(mock_voices, mock_lr, sample_profile_file):
     assert report["profile_loaded"] is True
     assert report["client_ready"] is True
     assert report["voice_available"] is True
+
+
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.list_voices")
+def test_doctor_report_env_credentials_source(mock_voices, mock_lr, sample_profile_file, monkeypatch):
+    from tts_mcp.core.profile import load_profile
+
+    monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/adc.json")
+
+    profile = load_profile(sample_profile_file, "test")
+    mock_lr.return_value = (profile, MagicMock())
+    voice = MagicMock()
+    voice.name = profile.voice
+    mock_voices.return_value = [voice]
+
+    report = doctor_report(str(sample_profile_file), "test")
+    assert report["credentials_source"] == "env_var"
+    assert report["credentials_path"] == "/tmp/adc.json"
+
+
+@patch("tts_mcp.server.load_runtime", side_effect=RuntimeError("bad runtime"))
+@patch("tts_mcp.server.resolve_profile_path", side_effect=ValueError("missing"))
+def test_doctor_report_uses_input_path_when_resolution_fails(mock_resolve, mock_lr):
+    report = doctor_report("/tmp/missing.json", "")
+    assert report["profile_file"] == "/tmp/missing.json"
+    assert report["ok"] is False
+
+
+@patch("tts_mcp.server.shutil.which", return_value=None)
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.list_voices")
+def test_doctor_report_player_missing_note(mock_voices, mock_lr, mock_which, sample_profile_file):
+    from tts_mcp.core.profile import load_profile
+
+    profile = load_profile(sample_profile_file, "test")
+    profile.autoplay = True
+    profile.player_command = ["missing-player", "{file}"]
+    mock_lr.return_value = (profile, MagicMock())
+
+    voice = MagicMock()
+    voice.name = profile.voice
+    mock_voices.return_value = [voice]
+
+    report = doctor_report(str(sample_profile_file), "test")
+    assert report["player_available"] is False
+    assert any("Audio player not found" in note for note in report["notes"])
 
 
 @patch("tts_mcp.server.load_runtime", side_effect=RuntimeError("boom"))
@@ -116,6 +164,26 @@ def test_create_server_returns_fastmcp(mock_lr, sample_profile_file):
     assert profile.name in server.name
 
 
+@patch("tts_mcp.server.create_tts_client")
+@patch("tts_mcp.server.load_profile")
+@patch("tts_mcp.server.resolve_profile_path")
+def test_load_runtime_resolves_profile_and_client(mock_resolve, mock_load_profile, mock_create_client):
+    resolved = MagicMock()
+    profile = MagicMock()
+    client = MagicMock()
+
+    mock_resolve.return_value = resolved
+    mock_load_profile.return_value = profile
+    mock_create_client.return_value = client
+
+    got_profile, got_client = load_runtime("/tmp/profiles.json", "demo")
+    assert got_profile is profile
+    assert got_client is client
+    mock_resolve.assert_called_once_with("/tmp/profiles.json")
+    mock_load_profile.assert_called_once_with(resolved, "demo")
+    mock_create_client.assert_called_once()
+
+
 # -- tool functions (via closure extraction) --
 
 
@@ -143,10 +211,40 @@ def test_tts_speak_tool_success(mock_play, mock_synth, mock_lr, sample_profile_f
     )
 
     server = create_server(str(sample_profile_file), "test")
-    speak_tool = server._tool_manager._tools["tts_speak"]
+    speak_tool: Any = server._tool_manager._tools["tts_speak"]
     result = speak_tool.fn(text="hello")
     assert result["ok"] is True
     assert result["chars"] == 5
+
+
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.synthesize_to_file")
+@patch("tts_mcp.server.play_audio", side_effect=RuntimeError("player failed"))
+def test_tts_speak_tool_reports_playback_error(mock_play, mock_synth, mock_lr, sample_profile_file, tmp_path):
+    from tts_mcp.core.profile import load_profile
+    from tts_mcp.core.synth import SynthesisResult
+
+    profile = load_profile(sample_profile_file, "test")
+    mock_lr.return_value = (profile, MagicMock())
+
+    output = tmp_path / "out" / "test.mp3"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    mock_synth.return_value = SynthesisResult(
+        output_file=output,
+        mime_type="audio/mpeg",
+        bytes_written=128,
+        chars=5,
+        voice=profile.voice,
+        language=profile.language,
+        model=profile.model,
+        audio_format=profile.audio_format,
+    )
+
+    server = create_server(str(sample_profile_file), "test")
+    speak_tool: Any = server._tool_manager._tools["tts_speak"]
+    result = speak_tool.fn(text="hello")
+    assert result["ok"] is True
+    assert result["playback_error"] == "player failed"
 
 
 @patch("tts_mcp.server.load_runtime")
@@ -158,7 +256,7 @@ def test_tts_speak_tool_error(mock_read, mock_lr, sample_profile_file):
     mock_lr.return_value = (profile, MagicMock())
 
     server = create_server(str(sample_profile_file), "test")
-    speak_tool = server._tool_manager._tools["tts_speak"]
+    speak_tool: Any = server._tool_manager._tools["tts_speak"]
     result = speak_tool.fn(text="hello")
     assert result["ok"] is False
     assert "bad input" in result["error"]
@@ -174,7 +272,93 @@ def test_tts_stop_tool(mock_stop, mock_lr, sample_profile_file):
     mock_stop.return_value = StopAudioResult(attempted=True, player="afplay", stopped_processes=1)
 
     server = create_server(str(sample_profile_file), "test")
-    stop_tool = server._tool_manager._tools["tts_stop"]
+    stop_tool: Any = server._tool_manager._tools["tts_stop"]
     result = stop_tool.fn()
     assert result["ok"] is True
     assert result["stopped_processes"] == 1
+
+
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.stop_audio", side_effect=RuntimeError("cannot stop"))
+def test_tts_stop_tool_error(mock_stop, mock_lr, sample_profile_file):
+    from tts_mcp.core.profile import load_profile
+
+    profile = load_profile(sample_profile_file, "test")
+    mock_lr.return_value = (profile, MagicMock())
+
+    server = create_server(str(sample_profile_file), "test")
+    stop_tool: Any = server._tool_manager._tools["tts_stop"]
+    result = stop_tool.fn()
+    assert result["ok"] is False
+    assert "cannot stop" in result["error"]
+
+
+@patch("tts_mcp.server.load_runtime")
+@patch("tts_mcp.server.doctor_report", return_value={"ok": True, "note": "hi"})
+def test_tts_doctor_tool_calls_doctor_report(mock_doctor, mock_lr, sample_profile_file):
+    from tts_mcp.core.profile import load_profile
+
+    profile = load_profile(sample_profile_file, "test")
+    mock_lr.return_value = (profile, MagicMock())
+
+    server = create_server(str(sample_profile_file), "test")
+    doctor_tool: Any = server._tool_manager._tools["tts_doctor"]
+    result = doctor_tool.fn()
+    assert result == {"ok": True, "note": "hi"}
+    mock_doctor.assert_called_once_with(str(sample_profile_file), profile.name)
+
+
+# -- main --
+
+
+@patch("tts_mcp.server.init_config")
+@patch("tts_mcp.server.parse_args")
+@patch("tts_mcp.server.configure_logging")
+def test_main_init_branch_success(mock_logging, mock_parse, mock_init, capsys):
+    mock_parse.return_value = argparse.Namespace(init=True, force=False, doctor=False, profiles="", profile="")
+    mock_init.return_value = "/tmp/profiles.json"
+
+    main()
+    out = capsys.readouterr().out
+    assert "Created /tmp/profiles.json" in out
+
+
+@patch("tts_mcp.server.init_config", side_effect=FileExistsError("already exists"))
+@patch("tts_mcp.server.parse_args")
+@patch("tts_mcp.server.configure_logging")
+def test_main_init_branch_failure_exits(mock_logging, mock_parse, mock_init, capsys):
+    mock_parse.return_value = argparse.Namespace(init=True, force=False, doctor=False, profiles="", profile="")
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    assert "already exists" in capsys.readouterr().out
+
+
+@patch("tts_mcp.server.doctor_report", return_value={"ok": True})
+@patch("tts_mcp.server.parse_args")
+@patch("tts_mcp.server.configure_logging")
+def test_main_doctor_branch(mock_logging, mock_parse, mock_doctor, capsys):
+    mock_parse.return_value = argparse.Namespace(
+        init=False, force=False, doctor=True, profiles="/tmp/p.json", profile="demo"
+    )
+
+    main()
+    out = capsys.readouterr().out
+    assert '"ok": true' in out
+    mock_doctor.assert_called_once_with("/tmp/p.json", "demo")
+
+
+@patch("tts_mcp.server.create_server")
+@patch("tts_mcp.server.parse_args")
+@patch("tts_mcp.server.configure_logging")
+def test_main_runs_server(mock_logging, mock_parse, mock_create_server):
+    mock_parse.return_value = argparse.Namespace(
+        init=False, force=False, doctor=False, profiles="/tmp/p.json", profile="demo"
+    )
+    server = MagicMock()
+    mock_create_server.return_value = server
+
+    main()
+    mock_create_server.assert_called_once_with("/tmp/p.json", "demo")
+    server.run.assert_called_once_with(show_banner=False)
