@@ -24,7 +24,7 @@ test: setup
 	@$(RUN) -m pytest
 
 lint: setup
-	@$(RUN) -m ruff check .
+	@$(RUN) -m ruff check --output-format=concise .
 	@$(RUN) -m ruff format --check .
 
 release:

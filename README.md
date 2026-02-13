@@ -53,7 +53,6 @@ The server finds the profiles file automatically — no `--profiles` flag needed
 
 1. `--profiles` flag or `TTS_MCP_PROFILES_PATH` env var (explicit override)
 2. `~/.config/tts-mcp/profiles.json` (XDG standard — created by `tts-mcp --init`)
-3. `./tts_profiles.json` (local dev fallback)
 
 ## MCP client setup
 
@@ -151,9 +150,9 @@ Defaults:
 - `--format`: `mp3`
 - `--speaking-rate`: `1.0`
 - `--pitch`: `0.0`
-- `--out`: `""` (auto-generates a timestamped filename in the current directory)
+- `--out`: `""` (auto-generates `YYYYMMDD-HHMMSS-ms.ext` in the current directory, local timezone)
 - `--usage-log`: `usage_log.csv`
-- input: if neither `--text` nor `--text-file` is provided, the CLI prompts for text
+- input: if neither `--text` nor `--text-file` is provided, the CLI reads piped stdin or prompts for text
 
 ### `tts-voices` — list available voices
 

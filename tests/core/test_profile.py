@@ -31,17 +31,6 @@ def test_resolve_xdg_path(tmp_path, monkeypatch):
     assert result == profiles
 
 
-def test_resolve_local_fallback(tmp_path, monkeypatch):
-    # No XDG path
-    monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
-    # Create local file in cwd
-    local = tmp_path / "tts_profiles.json"
-    local.write_text('{"profiles": {}}')
-    monkeypatch.chdir(tmp_path)
-    result = resolve_profile_path(None)
-    assert result == local.resolve()
-
-
 def test_resolve_nothing_found(tmp_path, monkeypatch):
     monkeypatch.setattr("tts_mcp.core.profile.default_config_dir", lambda: tmp_path / "empty")
     monkeypatch.chdir(tmp_path)

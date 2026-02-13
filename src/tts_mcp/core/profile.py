@@ -48,7 +48,6 @@ def resolve_profile_path(explicit: str | None = None) -> Path:
 
     1. Explicit path (--profiles flag or TTS_MCP_PROFILES_PATH env var)
     2. ~/.config/tts-mcp/profiles.json  (XDG standard)
-    3. ./tts_profiles.json  (legacy / local dev)
 
     Raises ValueError with a helpful message if nothing is found.
     """
@@ -61,10 +60,6 @@ def resolve_profile_path(explicit: str | None = None) -> Path:
     xdg_path = default_config_dir() / PROFILES_FILENAME
     if xdg_path.exists():
         return xdg_path
-
-    local_path = Path("./tts_profiles.json").resolve()
-    if local_path.exists():
-        return local_path
 
     raise ValueError(
         "No profiles file found.\n"

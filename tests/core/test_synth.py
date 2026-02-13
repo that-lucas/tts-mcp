@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from tts_mcp.core.synth import (
@@ -50,6 +52,20 @@ def test_timestamped_output_path_format(tmp_path):
 def test_timestamped_output_path_mp3(tmp_path):
     result = timestamped_output_path(audio_format="mp3", output_dir=tmp_path)
     assert result.suffix == ".mp3"
+
+
+def test_timestamped_output_path_includes_sanitized_prefix(tmp_path):
+    result = timestamped_output_path(audio_format="wav", output_dir=tmp_path, prefix="opencode tts")
+    assert result.parent == tmp_path
+    assert result.suffix == ".wav"
+    assert re.match(r"^opencode-tts-\d{8}-\d{6}-\d{3}\.wav$", result.name)
+
+
+def test_timestamped_output_path_no_prefix_when_empty(tmp_path):
+    result = timestamped_output_path(audio_format="wav", output_dir=tmp_path, prefix="")
+    assert result.parent == tmp_path
+    assert result.suffix == ".wav"
+    assert re.match(r"^\d{8}-\d{6}-\d{3}\.wav$", result.name)
 
 
 # -- sanitize_filename --

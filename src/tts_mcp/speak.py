@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -16,7 +17,7 @@ def parse_args() -> argparse.Namespace:
         description="Google Cloud TTS local tool",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--text", help="Text to synthesize. If omitted, reads stdin.")
+    parser.add_argument("--text", help="Text to synthesize. If omitted, reads piped stdin or prompts interactively.")
     parser.add_argument("--text-file", default="", help="Path to a UTF-8 text file to synthesize.")
     parser.add_argument("--ssml", action="store_true", help="Treat input as SSML.")
     parser.add_argument("--voice", default="", help="Voice name.")
@@ -41,15 +42,21 @@ def parse_args() -> argparse.Namespace:
 def _resolve_output_path(args: argparse.Namespace) -> Path:
     if args.out:
         return Path(args.out).expanduser().resolve()
-    now = datetime.now(UTC)
-    stamp = now.strftime("%Y-%m-%d-%H-%M-%S") + f"-{now.microsecond // 1000:03d}"
+    now = datetime.now().astimezone()
+    stamp = now.strftime("%Y%m%d-%H%M%S") + f"-{now.microsecond // 1000:03d}"
     return Path(f"{stamp}.{args.format}").resolve()
+
+
+def _read_text_fallback() -> str:
+    if not sys.stdin.isatty():
+        return sys.stdin.read()
+    return input("Paste text and press Enter: ").strip()
 
 
 def main() -> None:
     args = parse_args()
     if not args.text and not args.text_file:
-        args.text = input("Paste text and press Enter: ").strip()
+        args.text = _read_text_fallback()
 
     try:
         text = read_text_input(text=args.text or "", text_file=args.text_file)
