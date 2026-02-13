@@ -58,3 +58,29 @@ def test_resolve_output_path_uses_local_timestamp_format(monkeypatch):
     output = speak._resolve_output_path(args)
     assert output.is_absolute()
     assert re.match(r"^\d{8}-\d{6}-\d{3}\.mp3$", output.name)
+
+
+def test_resolve_output_path_uses_explicit_out(monkeypatch, tmp_path):
+    explicit = tmp_path / "my-audio.wav"
+    monkeypatch.setattr(sys, "argv", ["tts-speak", "--out", str(explicit)])
+    args = parse_args()
+    output = speak._resolve_output_path(args)
+    assert output == explicit.resolve()
+
+
+def test_main_exits_when_fallback_input_is_empty(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["tts-speak"])
+    args = parse_args()
+    args.text = ""
+    args.text_file = ""
+
+    monkeypatch.setattr(speak, "parse_args", lambda: args)
+    monkeypatch.setattr(speak, "_read_text_fallback", lambda: "")
+
+    def _unexpected_client_call():
+        raise AssertionError("create_tts_client should not be called")
+
+    monkeypatch.setattr(speak, "create_tts_client", _unexpected_client_call)
+
+    with pytest.raises(SystemExit, match="No input text provided"):
+        speak.main()

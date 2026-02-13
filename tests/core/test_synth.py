@@ -68,6 +68,13 @@ def test_timestamped_output_path_no_prefix_when_empty(tmp_path):
     assert re.match(r"^\d{8}-\d{6}-\d{3}\.wav$", result.name)
 
 
+def test_timestamped_output_path_no_prefix_when_whitespace(tmp_path):
+    result = timestamped_output_path(audio_format="wav", output_dir=tmp_path, prefix="   ")
+    assert result.parent == tmp_path
+    assert result.suffix == ".wav"
+    assert re.match(r"^\d{8}-\d{6}-\d{3}\.wav$", result.name)
+
+
 # -- sanitize_filename --
 
 
@@ -191,6 +198,27 @@ def test_synthesize_to_file_without_model(mock_tts_client, tmp_path):
     assert not hasattr(voice_params, "model_name") or voice_params.model_name is None or voice_params.model_name == ""
 
 
+def test_synthesize_to_file_whitespace_model_treated_as_empty(mock_tts_client, tmp_path):
+    output = tmp_path / "test.wav"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="en-US-Neural2-D",
+        language="en-US",
+        model="   ",
+        audio_format="wav",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+
+    call_kwargs = mock_tts_client.synthesize_speech.call_args
+    voice_params = call_kwargs.kwargs["request"]["voice"]
+    assert not hasattr(voice_params, "model_name") or voice_params.model_name is None or voice_params.model_name == ""
+    assert result.model == ""
+
+
 def test_synthesize_to_file_strips_whitespace_model(mock_tts_client, tmp_path):
     output = tmp_path / "test.wav"
     req = SynthesisRequest(
@@ -289,6 +317,23 @@ def test_synthesize_requires_voice_or_language(mock_tts_client, tmp_path):
         ssml=False,
         voice="",
         language="",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    with pytest.raises(ValueError, match="Either voice or language"):
+        synthesize_to_file(mock_tts_client, req)
+
+
+def test_synthesize_requires_voice_or_language_when_whitespace_only(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="  ",
+        language="\t",
         model="",
         audio_format="mp3",
         speaking_rate=1.0,
