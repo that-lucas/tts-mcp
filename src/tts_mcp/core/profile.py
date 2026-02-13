@@ -46,7 +46,7 @@ def default_config_dir() -> Path:
 def resolve_profile_path(explicit: str | None = None) -> Path:
     """Find the profiles file, searching in priority order.
 
-    1. Explicit path (--profiles flag or GTTS_PROFILES env var)
+    1. Explicit path (--profiles flag or TTS_MCP_PROFILES_PATH env var)
     2. ~/.config/tts-mcp/profiles.json  (XDG standard)
     3. ./tts_profiles.json  (legacy / local dev)
 
@@ -69,7 +69,7 @@ def resolve_profile_path(explicit: str | None = None) -> Path:
     raise ValueError(
         "No profiles file found.\n"
         "Run 'tts-mcp --init' to create one at ~/.config/tts-mcp/profiles.json\n"
-        "or specify a path with --profiles or the GTTS_PROFILES env var."
+        "or specify a path with --profiles or the TTS_MCP_PROFILES_PATH env var."
     )
 
 

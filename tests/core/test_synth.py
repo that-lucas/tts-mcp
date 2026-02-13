@@ -207,3 +207,56 @@ def test_synthesize_creates_parent_dirs(mock_tts_client, tmp_path):
     )
     result = synthesize_to_file(mock_tts_client, req)
     assert result.output_file.exists()
+
+
+def test_synthesize_allows_empty_voice_with_language(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="",
+        language="en-US",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+    assert result.voice == ""
+    assert result.language == "en-US"
+
+
+def test_synthesize_allows_voice_without_language(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="en-US-Neural2-D",
+        language="",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+    assert result.voice == "en-US-Neural2-D"
+    assert result.language == ""
+
+
+def test_synthesize_requires_voice_or_language(mock_tts_client, tmp_path):
+    output = tmp_path / "test.mp3"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="",
+        language="",
+        model="",
+        audio_format="mp3",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    with pytest.raises(ValueError, match="Either voice or language"):
+        synthesize_to_file(mock_tts_client, req)

@@ -87,17 +87,20 @@ def synthesize_to_file(
     else:
         synthesis_input = texttospeech.SynthesisInput(text=request.text)
 
+    voice_name = request.voice.strip()
+    language_code = request.language.strip()
+    if not voice_name and not language_code:
+        raise ValueError("Either voice or language must be provided.")
+
+    voice_kwargs: dict[str, str] = {}
+    if language_code:
+        voice_kwargs["language_code"] = language_code
+    if voice_name:
+        voice_kwargs["name"] = voice_name
     if request.model:
-        voice = texttospeech.VoiceSelectionParams(
-            language_code=request.language,
-            name=request.voice,
-            model_name=request.model,
-        )
-    else:
-        voice = texttospeech.VoiceSelectionParams(
-            language_code=request.language,
-            name=request.voice,
-        )
+        voice_kwargs["model_name"] = request.model
+
+    voice = texttospeech.VoiceSelectionParams(**voice_kwargs)
 
     response = client.synthesize_speech(
         request={
@@ -119,8 +122,8 @@ def synthesize_to_file(
         mime_type=MIME_TYPES[request.audio_format],
         bytes_written=len(response.audio_content),
         chars=len(request.text),
-        voice=request.voice,
-        language=request.language,
+        voice=voice_name,
+        language=language_code,
         model=request.model,
         audio_format=request.audio_format,
     )

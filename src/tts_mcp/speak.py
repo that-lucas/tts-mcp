@@ -12,11 +12,14 @@ from tts_mcp.core.usage import append_usage_row, create_usage_snapshot
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Google Cloud TTS local tool")
+    parser = argparse.ArgumentParser(
+        description="Google Cloud TTS local tool",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument("--text", help="Text to synthesize. If omitted, reads stdin.")
     parser.add_argument("--text-file", default="", help="Path to a UTF-8 text file to synthesize.")
     parser.add_argument("--ssml", action="store_true", help="Treat input as SSML.")
-    parser.add_argument("--voice", default="en-US-Chirp3-HD-Fenrir", help="Voice name.")
+    parser.add_argument("--voice", default="", help="Voice name.")
     parser.add_argument("--language", default="en-US", help="Language code.")
     parser.add_argument(
         "--model",

@@ -27,8 +27,8 @@ from tts_mcp.core.synth import SynthesisRequest, read_text_input, synthesize_to_
 from tts_mcp.core.usage import append_usage_row, create_usage_snapshot
 from tts_mcp.core.voices import list_voices
 
-PROFILES_ENV = "GTTS_PROFILES"
-PROFILE_NAME_ENV = "GTTS_PROFILE"
+PROFILES_ENV = "TTS_MCP_PROFILES_PATH"
+PROFILE_NAME_ENV = "TTS_MCP_PROFILE_NAME"
 
 
 def _example_profiles_text() -> str:
@@ -55,7 +55,10 @@ def init_config(force: bool = False) -> Path:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Google TTS MCP server")
+    parser = argparse.ArgumentParser(
+        description="Google TTS MCP server",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     parser.add_argument(
         "--profiles",
         default=os.getenv(PROFILES_ENV, ""),
