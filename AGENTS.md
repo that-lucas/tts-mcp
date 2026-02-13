@@ -28,27 +28,14 @@ Use Make targets first:
 make setup
 make test
 make lint
+make lint-fix
 ```
 
 What they do:
 - `make setup`: create `.venv`, install editable package + dev deps, set git hooks
 - `make test`: run pytest via `.venv/bin/python -m pytest`
 - `make lint`: run `ruff check .` and `ruff format --check .`
-
-## Lint/Format Commands
-Check only:
-
-```bash
-.venv/bin/python -m ruff check .
-.venv/bin/python -m ruff format --check .
-```
-
-Auto-fix:
-
-```bash
-.venv/bin/python -m ruff check --fix .
-.venv/bin/python -m ruff format .
-```
+- `make lint-fix`: auto-fix lint issues and apply formatting
 
 ## Code Style Guidelines
 
