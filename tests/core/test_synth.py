@@ -191,6 +191,27 @@ def test_synthesize_to_file_without_model(mock_tts_client, tmp_path):
     assert not hasattr(voice_params, "model_name") or voice_params.model_name is None or voice_params.model_name == ""
 
 
+def test_synthesize_to_file_strips_whitespace_model(mock_tts_client, tmp_path):
+    output = tmp_path / "test.wav"
+    req = SynthesisRequest(
+        text="test",
+        ssml=False,
+        voice="en-US-Neural2-D",
+        language="en-US",
+        model="  models/chirp3-hd  ",
+        audio_format="wav",
+        speaking_rate=1.0,
+        pitch=0.0,
+        output_file=output,
+    )
+    result = synthesize_to_file(mock_tts_client, req)
+
+    call_kwargs = mock_tts_client.synthesize_speech.call_args
+    voice_params = call_kwargs.kwargs["request"]["voice"]
+    assert voice_params.model_name == "models/chirp3-hd"
+    assert result.model == "models/chirp3-hd"
+
+
 def test_synthesize_to_file_bad_format(mock_tts_client, tmp_path):
     output = tmp_path / "test.aac"
     req = SynthesisRequest(

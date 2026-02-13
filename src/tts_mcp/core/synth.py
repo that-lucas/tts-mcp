@@ -91,6 +91,7 @@ def synthesize_to_file(
 
     voice_name = request.voice.strip()
     language_code = request.language.strip()
+    model_name = request.model.strip()
     if not voice_name and not language_code:
         raise ValueError("Either voice or language must be provided.")
 
@@ -99,8 +100,8 @@ def synthesize_to_file(
         voice.language_code = language_code
     if voice_name:
         voice.name = voice_name
-    if request.model:
-        voice.model_name = request.model
+    if model_name:
+        voice.model_name = model_name
 
     response = client.synthesize_speech(
         request={
@@ -124,6 +125,6 @@ def synthesize_to_file(
         chars=len(request.text),
         voice=voice_name,
         language=language_code,
-        model=request.model,
+        model=model_name,
         audio_format=request.audio_format,
     )
