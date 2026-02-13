@@ -35,37 +35,6 @@ What they do:
 - `make test`: run pytest via `.venv/bin/python -m pytest`
 - `make lint`: run `ruff check .` and `ruff format --check .`
 
-## Test Commands (Especially Single Test)
-Run all tests:
-
-```bash
-.venv/bin/python -m pytest
-```
-
-Run one test file:
-
-```bash
-.venv/bin/python -m pytest tests/core/test_synth.py
-```
-
-Run one test function:
-
-```bash
-.venv/bin/python -m pytest tests/core/test_synth.py::test_synthesize_to_file_mp3
-```
-
-Run by keyword expression:
-
-```bash
-.venv/bin/python -m pytest -k "profile and stop_audio"
-```
-
-Verbose mode for debugging:
-
-```bash
-.venv/bin/python -m pytest -vv
-```
-
 ## Lint/Format Commands
 Check only:
 
@@ -140,6 +109,7 @@ Auto-fix:
 - Prefer focused unit tests with mocks for Google APIs and subprocess
 - Parser/default/help changes should update `tests/test_*_cli.py`
 - Core logic changes should update `tests/core/test_*.py`
+- Tests should always be run via `make test` (do not use direct `pytest` commands in normal workflow)
 - Before PRs, run both:
 
 ```bash
@@ -164,10 +134,3 @@ make lint
 - Treat PR creation as the review gate; wait for review feedback before merge
 - After opening a PR, check review comments and address them in follow-up commits on the same branch
 - Re-run relevant tests/lint after addressing review feedback
-
-## Cursor/Copilot Rule Files Check
-No repository-specific Cursor/Copilot instruction files were found:
-- `.cursor/rules/` not present
-- `.cursorrules` not present
-- `.github/copilot-instructions.md` not present
-If these files are added later, treat them as higher-priority guidance and update this file.
