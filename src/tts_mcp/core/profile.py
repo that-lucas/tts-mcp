@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 CONFIG_DIR_NAME = "tts-mcp"
 PROFILES_FILENAME = "profiles.json"
@@ -163,9 +164,7 @@ def stop_audio(profile: TTSProfile) -> StopAudioResult:
     if pkill_cmd is not None:
         stop = subprocess.run([pkill_cmd, "-x", player], check=False)
     else:
-        if killall_cmd is None:
-            raise RuntimeError("Unable to stop playback automatically: missing killall")
-        stop = subprocess.run([killall_cmd, player], check=False)
+        stop = subprocess.run([cast(str, killall_cmd), player], check=False)
 
     if stop.returncode != 0:
         raise RuntimeError(f"Failed to stop active playback for player: {player}")
