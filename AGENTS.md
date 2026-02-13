@@ -34,7 +34,7 @@ make lint-fix
 What they do:
 - `make setup`: create `.venv`, install editable package + dev deps, set git hooks
 - `make test`: run pytest via `.venv/bin/python -m pytest`
-- `make lint`: run `ruff check .` and `ruff format --check .`
+- `make lint`: run `ruff check --output-format=concise .` and `ruff format --check .`
 - `make lint-fix`: auto-fix lint issues and apply formatting
 
 ## Code Style Guidelines
