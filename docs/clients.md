@@ -78,7 +78,7 @@ Any client can use `uvx` instead of a global pip install. Replace the command wi
 ```json
 {
   "command": "uvx",
-  "args": ["tts-mcp", "--profile", "opencode"]
+  "args": ["--update", "tts-mcp", "--profile", "opencode"]
 }
 ```
 
@@ -95,7 +95,7 @@ You can also select a default profile via env var:
 
 ## Prompting tips
 
-- Use hints like `use speech` when you want spoken output.
+- Hints like `use speech` are usually unnecessary, but they can help nudge the agent when it has access to many MCP servers.
 - Most clients prefix tool names with the server name:
   - `speech_tts_speak`
   - `speech_tts_doctor`

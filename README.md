@@ -26,7 +26,7 @@ uvx tts-mcp --help
 
 - Python 3.11+
 - A [Google Cloud project](https://console.cloud.google.com/freetrial) with the **Cloud Text-to-Speech API** enabled
-- Google offers a generous free tier — up to **4 million characters/month** for Standard and WaveNet voices, and **1 million characters/month** for Neural2, Polyglot, Chirp 3: HD, and Studio voices, more than enough for most individual use. See [TTS pricing](https://cloud.google.com/text-to-speech/pricing) for details.
+- Google offers a generous free tier — up to **4 million characters/month** (roughly **84 hours** of English speech at a normal pace) for Standard and WaveNet voices, and **1 million characters/month** (roughly **21 hours**) for Neural2, Polyglot, Chirp 3: HD, and Studio voices, more than enough for most individual use. See [TTS pricing](https://cloud.google.com/text-to-speech/pricing) for details.
 - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`) for authentication
 - macOS uses `afplay` for playback by default (configurable via profile)
 
@@ -45,6 +45,7 @@ This stores credentials at `~/.config/gcloud/application_default_credentials.jso
 
 ```bash
 tts-mcp --init
+${EDITOR:-vi} ~/.config/tts-mcp/profiles.json
 ```
 
 This creates a starter config at `~/.config/tts-mcp/profiles.json` with example profiles for every Google TTS voice tier. Edit it to pick your voice, format, and playback settings.
@@ -99,7 +100,7 @@ Any client config can use `uvx` instead of installing globally:
 ```json
 {
   "command": "uvx",
-  "args": ["tts-mcp", "--profile", "opencode"]
+  "args": ["--update", "tts-mcp", "--profile", "opencode"]
 }
 ```
 
@@ -107,14 +108,15 @@ Any client config can use `uvx` instead of installing globally:
 
 In any MCP-enabled client, prompt naturally:
 
-- `Summarize this and read it aloud. use speech`
-- `Stop current playback. use speech`
+- `Summarize this and read it aloud.`
+- `Stop talking.`
 
 Tool names may appear prefixed by the client (e.g. `speech_tts_speak`, `speech_tts_stop`).
 
 ## CLI reference
 
 The package installs four commands. Each supports `--help` for full details.
+For normal usage, you only need `tts-mcp --init` plus your MCP client setup above; the commands below are mostly for diagnostics or manual testing.
 
 ### `tts-mcp` — MCP server and management
 
