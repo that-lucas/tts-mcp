@@ -107,8 +107,8 @@ Any client config can use `uvx` instead of installing globally:
 
 In any MCP-enabled client, prompt naturally:
 
-- `Summarize this and read it aloud. use speech`
-- `Stop current playback. use speech`
+- `Summarize this and read it aloud.`
+- `Stop talking.`
 
 Tool names may appear prefixed by the client (e.g. `speech_tts_speak`, `speech_tts_stop`).
 
