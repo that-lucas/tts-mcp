@@ -45,6 +45,7 @@ This stores credentials at `~/.config/gcloud/application_default_credentials.jso
 
 ```bash
 tts-mcp --init
+${EDITOR:-vi} ~/.config/tts-mcp/profiles.json
 ```
 
 This creates a starter config at `~/.config/tts-mcp/profiles.json` with example profiles for every Google TTS voice tier. Edit it to pick your voice, format, and playback settings.
@@ -99,7 +100,7 @@ Any client config can use `uvx` instead of installing globally:
 ```json
 {
   "command": "uvx",
-  "args": ["tts-mcp", "--profile", "opencode"]
+  "args": ["--update", "tts-mcp", "--profile", "opencode"]
 }
 ```
 
@@ -115,6 +116,7 @@ Tool names may appear prefixed by the client (e.g. `speech_tts_speak`, `speech_t
 ## CLI reference
 
 The package installs four commands. Each supports `--help` for full details.
+For normal usage, you only need `tts-mcp --init` plus your MCP client setup above; the commands below are mostly for diagnostics or manual testing.
 
 ### `tts-mcp` — MCP server and management
 
