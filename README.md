@@ -26,7 +26,7 @@ uvx tts-mcp --help
 
 - Python 3.11+
 - A [Google Cloud project](https://console.cloud.google.com/freetrial) with the **Cloud Text-to-Speech API** enabled
-- Google offers a generous free tier — up to **4 million characters/month** for Standard and WaveNet voices, and **1 million characters/month** for Neural2, Polyglot, Chirp 3: HD, and Studio voices, more than enough for most individual use. See [TTS pricing](https://cloud.google.com/text-to-speech/pricing) for details.
+- Google offers a generous free tier — up to **4 million characters/month** (roughly **84 hours** of English speech at a normal pace) for Standard and WaveNet voices, and **1 million characters/month** (roughly **21 hours**) for Neural2, Polyglot, Chirp 3: HD, and Studio voices, more than enough for most individual use. See [TTS pricing](https://cloud.google.com/text-to-speech/pricing) for details.
 - [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) (`gcloud`) for authentication
 - macOS uses `afplay` for playback by default (configurable via profile)
 
